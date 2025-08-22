@@ -1,0 +1,15 @@
+<div class="dashboard-container">
+  <h2>Dashboard</h2>
+  <p class="welcome-message">Welcome, {{ auth.getRole() }}!</p>
+  
+  <div class="admin-section" *ngIf="auth.getRole() === 'ADMIN'">
+    <a routerLink="/admin/users" class="admin-link">Go to Admin Panel</a>
+  </div>
+  
+  <div class="user-info">
+    <p>Role: {{ auth.getRole() }}</p>
+    <p>Logged in: {{ auth.isLoggedIn() ? 'Yes' : 'No' }}</p>
+  </div>
+  
+  <button class="logout-btn" (click)="auth.logout()">Logout</button>
+</div>
