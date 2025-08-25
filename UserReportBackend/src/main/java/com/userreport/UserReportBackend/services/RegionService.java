@@ -2,7 +2,7 @@ package com.userreport.UserReportBackend.services;
 
 import com.userreport.UserReportBackend.dto.region.RegionSaveRequestDTO;
 import com.userreport.UserReportBackend.dto.region.RegionSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.region.RegionUpdateRequestDTO;
+import com.userreport.UserReportBackend.dto.region.RegionDescriptionUpdateRequestDTO;
 import com.userreport.UserReportBackend.entity.RegionEntity;
 
 import java.util.List;
@@ -16,5 +16,5 @@ public interface RegionService {
 
     void deleteRegion(Long id);
 
-    RegionSaveResponseDTO updateRegionDescription(Long id, RegionUpdateRequestDTO regionUpdateRequestDTO);
+    RegionSaveResponseDTO updateRegionDescription(Long id, RegionDescriptionUpdateRequestDTO regionDescriptionUpdateRequestDTO);
 }

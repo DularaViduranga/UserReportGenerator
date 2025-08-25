@@ -20,8 +20,8 @@ public class CollectionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "targat", precision = 10, scale = 2)
-    private BigDecimal targat;
+    @Column(name = "target", precision = 10, scale = 2)
+    private BigDecimal target;
 
     @Column(name = "due", precision = 10, scale = 2)
     private BigDecimal due;

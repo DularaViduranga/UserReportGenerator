@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BranchRepo extends JpaRepository<BranchEntity,Long> {
+    boolean existsByBrnName(String upperCase);
 }

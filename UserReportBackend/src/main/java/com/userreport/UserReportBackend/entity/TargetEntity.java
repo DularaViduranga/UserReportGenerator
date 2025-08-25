@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "sdb_targat")
+@Table(name = "sdb_target")
 public class TargetEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "targat", precision = 10, scale = 2, nullable = false)
-    private BigDecimal targat;
+    @Column(name = "target", precision = 10, scale = 2, nullable = false)
+    private BigDecimal target;
 
     // One-to-One: This target belongs to one Branch
     @OneToOne(fetch = FetchType.LAZY)

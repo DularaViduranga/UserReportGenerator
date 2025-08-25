@@ -1,0 +1,15 @@
+package com.userreport.UserReportBackend.dto.target;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TargetSaveRequestDTO {
+    private BigDecimal target;
+    private Long branchId;
+}

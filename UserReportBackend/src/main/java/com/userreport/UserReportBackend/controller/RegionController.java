@@ -2,7 +2,7 @@ package com.userreport.UserReportBackend.controller;
 
 import com.userreport.UserReportBackend.dto.region.RegionSaveRequestDTO;
 import com.userreport.UserReportBackend.dto.region.RegionSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.region.RegionUpdateRequestDTO;
+import com.userreport.UserReportBackend.dto.region.RegionDescriptionUpdateRequestDTO;
 import com.userreport.UserReportBackend.entity.RegionEntity;
 import com.userreport.UserReportBackend.services.RegionService;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +47,8 @@ public class RegionController {
 
     @PutMapping("/updateRegionDescription/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RegionSaveResponseDTO> updateRegionDescription(@PathVariable Long id, @RequestBody RegionUpdateRequestDTO regionUpdateRequestDTO) {
-        RegionSaveResponseDTO res = regionService.updateRegionDescription(id, regionUpdateRequestDTO);
+    public ResponseEntity<RegionSaveResponseDTO> updateRegionDescription(@PathVariable Long id, @RequestBody RegionDescriptionUpdateRequestDTO regionDescriptionUpdateRequestDTO) {
+        RegionSaveResponseDTO res = regionService.updateRegionDescription(id, regionDescriptionUpdateRequestDTO);
         return ResponseEntity.ok(res);
     }
 

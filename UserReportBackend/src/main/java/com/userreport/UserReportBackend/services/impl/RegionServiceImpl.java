@@ -1,8 +1,8 @@
 package com.userreport.UserReportBackend.services.impl;
 
-import com.userreport.UserReportBackend.dto.region.RegionSaveRequestDTO;
-import com.userreport.UserReportBackend.dto.region.RegionSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.region.RegionUpdateRequestDTO;
+import com.userreport.UserReportBackend.dto.branch.BranchSummaryDTO;
+import com.userreport.UserReportBackend.dto.region.*;
+import com.userreport.UserReportBackend.entity.BranchEntity;
 import com.userreport.UserReportBackend.entity.RegionEntity;
 import com.userreport.UserReportBackend.repository.RegionRepo;
 import com.userreport.UserReportBackend.services.RegionService;
@@ -10,6 +10,7 @@ import com.userreport.UserReportBackend.services.RegionService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RegionServiceImpl implements RegionService {
@@ -89,8 +90,8 @@ public class RegionServiceImpl implements RegionService {
     }
 
     @Override
-    public RegionSaveResponseDTO updateRegionDescription(Long id, RegionUpdateRequestDTO regionUpdateRequestDTO) {
-        if (regionUpdateRequestDTO.getRgnDes() == null || regionUpdateRequestDTO.getRgnDes().isEmpty()) {
+    public RegionSaveResponseDTO updateRegionDescription(Long id, RegionDescriptionUpdateRequestDTO regionDescriptionUpdateRequestDTO) {
+        if (regionDescriptionUpdateRequestDTO.getRgnDes() == null || regionDescriptionUpdateRequestDTO.getRgnDes().isEmpty()) {
             return new RegionSaveResponseDTO(null, "Region description cannot be empty");
         }
         if (!regionRepo.existsById(id)) {
@@ -98,7 +99,7 @@ public class RegionServiceImpl implements RegionService {
         }
         try {
             RegionEntity regionEntity = regionRepo.findById(id).get();
-            regionEntity.setRgnDes(regionUpdateRequestDTO.getRgnDes());
+            regionEntity.setRgnDes(regionDescriptionUpdateRequestDTO.getRgnDes());
             regionRepo.save(regionEntity);
             return new RegionSaveResponseDTO("Region description updated successfully", null);
         } catch (Exception e) {
@@ -106,5 +107,40 @@ public class RegionServiceImpl implements RegionService {
         }
     }
 
+
+    private RegionResponseDTO convertToResponseDTO(RegionEntity region) {
+        RegionResponseDTO dto = new RegionResponseDTO();
+        dto.setId((long) region.getId());
+        dto.setRgnName(region.getRgnName());
+        dto.setRgnDes(region.getRgnDes());
+        dto.setTotalBranches(region.getBranches().size());
+
+        // Convert branches to summary DTOs
+        List<BranchSummaryDTO> branchSummaries = region.getBranches().stream()
+                .map(this::convertBranchToSummaryDTO)
+                .collect(Collectors.toList());
+        dto.setBranches(branchSummaries);
+
+        return dto;
+    }
+
+    private RegionSummaryDTO convertToSummaryDTO(RegionEntity region) {
+        RegionSummaryDTO dto = new RegionSummaryDTO();
+        dto.setId((long) region.getId());
+        dto.setRgnName(region.getRgnName());
+        dto.setRgnDes(region.getRgnDes());
+        dto.setTotalBranches(region.getBranches().size());
+        return dto;
+    }
+
+    private BranchSummaryDTO convertBranchToSummaryDTO(BranchEntity branch) {
+        BranchSummaryDTO dto = new BranchSummaryDTO();
+        dto.setId(branch.getId());
+        dto.setBrnName(branch.getBrnName());
+        dto.setBrnDes(branch.getBrnDes());
+        dto.setHasTarget(branch.getTarget() != null);
+        dto.setHasCollection(false); // Will be set based on collection relationship
+        return dto;
+    }
 
 }

@@ -1,5 +1,7 @@
 package com.userreport.UserReportBackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,11 +28,16 @@ public class RegionEntity {
 
     // One-to-Many: One Region has many Branches
     @OneToMany(mappedBy = "region", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<BranchEntity> branches = new ArrayList<>();
 
     // Constructor for creating a new Region
     public RegionEntity(String rgnName, String rgnDes) {
         this.rgnName = rgnName;
         this.rgnDes = rgnDes;
+    }
+
+    public int getId() {
+        return id.intValue();
     }
 }
