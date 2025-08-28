@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.services;
 
-import com.userreport.UserReportBackend.dto.target.TargetResponseDTO;
-import com.userreport.UserReportBackend.dto.target.TargetSaveRequestDTO;
-import com.userreport.UserReportBackend.dto.target.TargetSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.target.TargetUpdateRequestDTO;
+import com.userreport.UserReportBackend.dto.target.*;
 import com.userreport.UserReportBackend.entity.TargetEntity;
 
 import java.math.BigDecimal;
@@ -22,11 +19,49 @@ public interface TargetService {
 
     TargetEntity getTargetById(Long id);
 
+    TargetResponseDTO getTargetResponseById(Long id);
+
     TargetEntity getTargetByBranchId(Long branchId);
+
+    TargetResponseDTO getTargetResponseByBranchId(Long branchId);
+
+    TargetEntity getTargetByBranchIdAndYearMonth(Long branchId, Integer year, Integer month);
+
+    TargetResponseDTO getTargetResponseByBranchIdAndYearMonth(Long branchId, Integer year, Integer month);
+
+    List<TargetEntity> getTargetsByBranchIdAndYear(Long branchId, Integer year);
+
+    List<TargetResponseDTO> getTargetResponsesByBranchIdAndYear(Long branchId, Integer year);
 
     List<TargetEntity> getTargetsByRegionId(Long regionId);
 
+    List<TargetResponseDTO> getTargetResponsesByRegionId(Long regionId);
+
+    List<TargetEntity> getTargetsByRegionIdAndYearMonth(Long regionId, Integer year, Integer month);
+
+    List<TargetResponseDTO> getTargetResponsesByRegionIdAndYearMonth(Long regionId, Integer year, Integer month);
+
     List<TargetEntity> getTargetsByMinimumAmount(BigDecimal amount);
 
+    List<TargetResponseDTO> getTargetResponsesByMinimumAmount(BigDecimal amount);
+
+    List<TargetEntity> getTargetsByYear(Integer year);
+
+    List<TargetResponseDTO> getTargetResponsesByYear(Integer year);
+
+    List<TargetEntity> getTargetsByYearAndMonth(Integer year, Integer month);
+
+    List<TargetResponseDTO> getTargetResponsesByYearAndMonth(Integer year, Integer month);
+
     BigDecimal getTotalTargetByRegion(Long regionId);
+
+    BigDecimal getTotalTargetByRegionAndYearMonth(Long regionId, Integer year, Integer month);
+
+    MonthlyTargetSummaryDTO getMonthlyTargetSummary(Integer year, Integer month);
+
+    MonthlyTargetSummaryDTO getMonthlyTargetSummaryByRegion(Long regionId, Integer year, Integer month);
+
+    YearlyTargetSummaryDTO getYearlyTargetSummary(Integer year);
+
+    YearlyTargetSummaryDTO getYearlyTargetSummaryByRegion(Long regionId, Integer year);
 }

@@ -1,0 +1,127 @@
+<div class="target-management-container">
+  <div class="header">
+    <h2>Target Management</h2>
+  </div>
+
+  <!-- Alert Messages -->
+  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-error'">
+    {{ message }}
+  </div>
+
+  <div class="form-container">
+    <form (ngSubmit)="submitTarget()" #targetForm="ngForm">
+      
+      <!-- Region Selection -->
+      <div class="form-group">
+        <label for="region">Select Region *</label>
+        <select 
+          id="region" 
+          [(ngModel)]="selectedRegionId" 
+          name="region" 
+          (change)="onRegionChange()"
+          class="form-control"
+          required>
+          <option value="">-- Select Region --</option>
+          <option *ngFor="let region of regions" [value]="region.id">
+            {{ region.rgnName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Branch Selection -->
+      <div class="form-group">
+        <label for="branch">Select Branch *</label>
+        <select 
+          id="branch" 
+          [(ngModel)]="selectedBranchId" 
+          name="branch"
+          (change)="onSelectionChange()"
+          class="form-control"
+          [disabled]="!selectedRegionId || branches.length === 0"
+          required>
+          <option value="">-- Select Branch --</option>
+          <option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Year and Month Selection -->
+      <div class="form-group">
+        <label for="yearMonth">Select Year and Month *</label>
+        <input 
+          type="month" 
+          id="yearMonth" 
+          [(ngModel)]="selectedYearMonth" 
+          name="yearMonth"
+          (change)="onYearMonthChange()"
+          class="form-control"
+          required>
+      </div>
+
+      <!-- Existing Target Display -->
+      <div class="target-display" *ngIf="selectedBranchId && selectedYear && selectedMonth">
+        <div class="target-info">
+          <label>Existing Target for Selected Period:</label>
+          <div class="target-amount" *ngIf="existingTarget && existingTarget.target > 0">
+            <span class="amount">Rs. {{ existingTarget.target | number:'1.2-2' }}</span>
+            <span class="status-badge" *ngIf="isUpdateMode">Updating</span>
+          </div>
+          <div class="no-target" *ngIf="!existingTarget || existingTarget.target === 0">
+            <span class="info">📝 No target set for this period</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Target Amount -->
+      <div class="form-group">
+        <label for="target">Target Amount *</label>
+        <input 
+          type="number" 
+          id="target" 
+          [(ngModel)]="targetAmount" 
+          name="target"
+          class="form-control"
+          placeholder="Enter target amount"
+          min="0"
+          step="0.1"
+          required>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="resetForm()">
+          Reset
+        </button>
+        
+        <!-- Create Button (when not in update mode) -->
+        <button 
+          *ngIf="!isUpdateMode"
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="!canSubmit() || loading">
+          <span *ngIf="loading" class="spinner"></span>
+          {{ loading ? 'Creating...' : 'Create Target' }}
+        </button>
+        
+        <!-- Update Button (only for admins and when existing target found) -->
+        <button 
+          *ngIf="isUpdateMode && isAdmin"
+          type="submit" 
+          class="btn btn-warning"
+          [disabled]="!canSubmit() || loading">
+          <span *ngIf="loading" class="spinner"></span>
+          {{ loading ? 'Updating...' : 'Update Target' }}
+        </button>
+        
+        <!-- Message for non-admin users when target exists -->
+        <div *ngIf="isUpdateMode && !isAdmin" class="admin-only-message">
+          <p>Target already exists for this selection. Only administrators can update targets.</p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

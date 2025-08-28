@@ -16,8 +16,12 @@ public class CollectionResponseDTO {
     private BigDecimal due;
     private BigDecimal collectionAmount;
     private BigDecimal percentage;
+    private Integer collectionYear;
+    private Integer collectionMonth;
     private String branchName;
     private String regionName;
     private LocalDateTime createdDatetime;
     private LocalDateTime modifyDatetime;
+    private String createdByUsername;
+    private String modifyByUsername;
 }

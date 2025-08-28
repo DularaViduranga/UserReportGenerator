@@ -11,4 +11,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TargetUpdateRequestDTO {
     private BigDecimal target;
+    private Integer targetYear;
+    private Integer targetMonth;
 }

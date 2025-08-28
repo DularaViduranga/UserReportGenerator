@@ -3,10 +3,20 @@
     <h1>{{ title }}</h1>
   </div>
   <div class="nav-links">
-    <a routerLink="/dashboard" class="nav-link">Dashboard</a>
-    <a routerLink="/admin/users" class="nav-link">Admin</a>
-    <a routerLink="/login" class="nav-link">Login</a>
-    <a routerLink="/register" class="nav-link">Register</a>
+    <!-- Authenticated User Links -->
+    <ng-container *ngIf="auth.isLoggedIn()">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+      <a routerLink="/targets" routerLinkActive="active" class="nav-link">Targets</a>
+      <a routerLink="/collections" routerLinkActive="active" class="nav-link">Collections</a>
+      <a routerLink="/analytics" routerLinkActive="active" class="nav-link">Analytics</a>
+      <a *ngIf="auth.getRole() === 'ADMIN'" routerLink="/admin/users" routerLinkActive="active" class="nav-link admin-link">Admin</a>
+    </ng-container>
+    
+    <!-- Guest User Links -->
+    <ng-container *ngIf="!auth.isLoggedIn()">
+      <a routerLink="/login" routerLinkActive="active" class="nav-link">Login</a>
+      <a routerLink="/register" routerLinkActive="active" class="nav-link">Register</a>
+    </ng-container>
   </div>
 </nav>
 

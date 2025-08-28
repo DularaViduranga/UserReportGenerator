@@ -87,7 +87,24 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     if (typeof localStorage === 'undefined') return false;
-    return !!localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
+    if (!token) return false;
+    
+    // Check if token is expired
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        console.log('Token expired, removing from localStorage');
+        this.logout();
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      this.logout();
+      return false;
+    }
   }
 
   getRole(): string {
@@ -104,9 +121,53 @@ export class AuthService {
     }
   }
 
+  getUsername(): string {
+    if (typeof localStorage === 'undefined') return '';
+    const token = localStorage.getItem('authToken');
+    if (!token) return '';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || payload.username || '';
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      return '';
+    }
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'ADMIN';
+  }
+
   getToken(): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage.getItem('authToken');
+    if (typeof localStorage === 'undefined') {
+      console.log('localStorage is undefined');
+      return null;
+    }
+    const token = localStorage.getItem('authToken');
+    console.log('Getting token from localStorage:', token ? 'Token exists' : 'No token found');
+    return token;
+  }
+
+  // Debug method to check token details
+  debugTokenInfo(): void {
+    const token = this.getToken();
+    console.log('=== AUTH DEBUG INFO ===');
+    console.log('Token exists:', !!token);
+    console.log('Token length:', token ? token.length : 0);
+    
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Token payload:', payload);
+        console.log('Token expires at:', new Date(payload.exp * 1000));
+        console.log('Current time:', new Date());
+        console.log('Token expired:', payload.exp < Math.floor(Date.now() / 1000));
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
+    }
+    console.log('isLoggedIn():', this.isLoggedIn());
+    console.log('========================');
   }
 
   logout(): void {

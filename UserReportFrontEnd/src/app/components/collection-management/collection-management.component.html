@@ -1,0 +1,165 @@
+<div class="collection-management-container">
+  <div class="header">
+    <h2>Collection Management</h2>
+  </div>
+
+  <!-- Alert Messages -->
+  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-error'">
+    {{ message }}
+  </div>
+
+  <div class="form-container">
+    <form (ngSubmit)="submitCollection()" #collectionForm="ngForm">
+      
+      <!-- Region Selection -->
+      <div class="form-group">
+        <label for="region">Select Region *</label>
+        <select 
+          id="region" 
+          [(ngModel)]="selectedRegionId" 
+          name="region" 
+          (change)="onRegionChange()"
+          class="form-control"
+          required>
+          <option value="">-- Select Region --</option>
+          <option *ngFor="let region of regions" [value]="region.id">
+            {{ region.rgnName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Branch Selection -->
+      <div class="form-group">
+        <label for="branch">Select Branch *</label>
+        <select 
+          id="branch" 
+          [(ngModel)]="selectedBranchId" 
+          name="branch"
+          (change)="onSelectionChange()"
+          class="form-control"
+          [disabled]="!selectedRegionId || branches.length === 0"
+          required>
+          <option value="">-- Select Branch --</option>
+          <option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Year and Month Selection -->
+      <div class="form-group">
+        <label for="yearMonth">Select Year and Month *</label>
+        <input 
+          type="month" 
+          id="yearMonth" 
+          [(ngModel)]="selectedYearMonth" 
+          name="yearMonth"
+          (change)="onYearMonthChange()"
+          class="form-control"
+          required>
+      </div>
+
+      <!-- Target Display -->
+      <div class="target-display" *ngIf="selectedBranchId && selectedYear && selectedMonth">
+        <div class="target-info">
+          <label>Target for Selected Period:</label>
+          <div class="target-amount" *ngIf="!loadingTarget && targetAmount > 0">
+            <span class="amount">Rs. {{ targetAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="loading-target" *ngIf="loadingTarget">
+            <span class="spinner-small"></span>
+            Loading target...
+          </div>
+          <div class="no-target" *ngIf="!loadingTarget && targetAmount === 0">
+            <span class="warning">⚠️ No target set for this period</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing Collection Display -->
+      <div class="collection-display" *ngIf="selectedBranchId && selectedYear && selectedMonth">
+        <div class="collection-info">
+          <label>Existing Collection for Selected Period:</label>
+          <div class="collection-amount" *ngIf="existingCollection && existingCollection.collectionAmount > 0">
+            <span class="amount">Rs. {{ existingCollection.collectionAmount | number:'1.2-2' }}</span>
+            <span class="status-badge" *ngIf="isUpdateMode">Updating</span>
+          </div>
+          <div class="no-collection" *ngIf="!existingCollection || existingCollection.collectionAmount === 0">
+            <span class="info">📝 No collection recorded for this period</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collection Amount -->
+      <div class="form-group">
+        <label for="collection">Collection Amount *</label>
+        <input 
+          type="number" 
+          id="collection" 
+          [(ngModel)]="collectionAmount" 
+          name="collection"
+          class="form-control"
+          placeholder="Enter collection amount"
+          min="0"
+          step="0.1"
+          required>
+      </div>
+
+      <!-- Achievement Display -->
+      <div class="achievement-display" *ngIf="targetAmount > 0 && collectionAmount > 0">
+        <div class="achievement-info">
+          <label>Achievement Progress:</label>
+          <div class="achievement-stats">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width.%]="getAchievementPercentage()"
+                   [ngClass]="'status-' + getAchievementStatus()">
+              </div>
+            </div>
+            <div class="achievement-text" [ngClass]="'status-' + getAchievementStatus()">
+              {{ getAchievementPercentage() }}% achieved
+              <span class="target-vs-collection">
+                (Rs. {{ collectionAmount | number:'1.2-2' }} / Rs. {{ targetAmount | number:'1.2-2' }})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="resetForm()">
+          Reset
+        </button>
+        
+        <!-- Create Button (when not in update mode) -->
+        <button 
+          *ngIf="!isUpdateMode"
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="!canSubmit() || loading">
+          <span *ngIf="loading" class="spinner"></span>
+          {{ loading ? 'Recording...' : 'Record Collection' }}
+        </button>
+        
+        <!-- Update Button (only for admins and when existing collection found) -->
+        <button 
+          *ngIf="isUpdateMode && isAdmin"
+          type="submit" 
+          class="btn btn-warning"
+          [disabled]="!canSubmit() || loading">
+          <span *ngIf="loading" class="spinner"></span>
+          {{ loading ? 'Updating...' : 'Update Collection' }}
+        </button>
+        
+        <!-- Message for non-admin users when collection exists -->
+        <div *ngIf="isUpdateMode && !isAdmin" class="admin-only-message">
+          <p>Collection already exists for this selection. Only administrators can update collections.</p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

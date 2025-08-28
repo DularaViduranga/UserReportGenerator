@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CollectionSaveRequestDTO {
-    private BigDecimal target;
-    private BigDecimal due;
     private BigDecimal collectionAmount;
+    private Integer collectionYear;
+    private Integer collectionMonth;
     private Long branchId;
 }

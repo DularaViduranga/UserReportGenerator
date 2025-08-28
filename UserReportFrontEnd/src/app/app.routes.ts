@@ -11,6 +11,21 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [AuthGuard] },
+  { 
+    path: 'targets', 
+    loadComponent: () => import('./components/target-management/target-management.component').then(m => m.TargetManagementComponent), 
+    canActivate: [AuthGuard] 
+  },
+  { 
+    path: 'collections', 
+    loadComponent: () => import('./components/collection-management/collection-management.component').then(m => m.CollectionManagementComponent), 
+    canActivate: [AuthGuard] 
+  },
+  { 
+    path: 'analytics', 
+    loadComponent: () => import('./components/analytics/analytics.component').then(m => m.AnalyticsComponent), 
+    canActivate: [AuthGuard] 
+  },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

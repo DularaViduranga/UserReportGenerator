@@ -12,5 +12,4 @@ public class BranchSaveRequestDTO {
     private String brnName;
     private String brnDes;
     private String region;
-
 }

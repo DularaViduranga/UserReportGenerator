@@ -7,7 +7,6 @@ import com.userreport.UserReportBackend.dto.branch.BranchSummaryResponseDTO;
 import com.userreport.UserReportBackend.dto.info.CollectionInfoDTO;
 import com.userreport.UserReportBackend.dto.info.RegionInfoDTO;
 import com.userreport.UserReportBackend.dto.info.TargetInfoDTO;
-import com.userreport.UserReportBackend.dto.region.RegionSaveResponseDTO;
 import com.userreport.UserReportBackend.entity.BranchEntity;
 import com.userreport.UserReportBackend.entity.CollectionEntity;
 import com.userreport.UserReportBackend.entity.TargetEntity;
@@ -101,12 +100,55 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public List<BranchResponseDTO> getBranchResponsesByRegionId(Long regionId) {
         List<BranchEntity> branches = branchRepo.findAll().stream()
-                .filter(branch -> branch.getRegion().getId())
+                .filter(branch -> regionId.equals(Long.valueOf(branch.getRegion().getId())))
                 .collect(Collectors.toList());
 
         return branches.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BranchEntity> getBranchesByRegionId(Long regionId) {
+        return branchRepo.findByRegionId(regionId);
+    }
+
+    @Override
+    public BranchEntity updateBranch(Long id, BranchSaveRequestDTO branchDto) {
+        BranchEntity existingBranch = branchRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Branch not found with id: " + id));
+
+        if (branchDto.getBrnName() != null && !branchDto.getBrnName().isEmpty()) {
+            existingBranch.setBrnName(branchDto.getBrnName().toUpperCase());
+        }
+        if (branchDto.getBrnDes() != null && !branchDto.getBrnDes().isEmpty()) {
+            existingBranch.setBrnDes(branchDto.getBrnDes());
+        }
+        if (branchDto.getRegion() != null) {
+            String regionName = branchDto.getRegion().toUpperCase();
+            if (!regionRepo.existsByRgnName(regionName)) {
+                throw new RuntimeException("Region with name " + regionName + " does not exist");
+            }
+            existingBranch.setRegion(regionRepo.findByRgnName(regionName));
+        }
+
+        try {
+            return branchRepo.save(existingBranch);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating branch: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteBranch(Long id) {
+        if (!branchRepo.existsById(id)) {
+            throw new RuntimeException("Branch not found");
+        }
+        try {
+            branchRepo.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting branch: " + e.getMessage());
+        }
     }
 
     private BranchResponseDTO convertToResponseDTO(BranchEntity branch) {
@@ -117,14 +159,15 @@ public class BranchServiceImpl implements BranchService {
 
         // Set region info
         RegionInfoDTO regionInfo = new RegionInfoDTO();
-        regionInfo.setId((long) branch.getRegion().getId());
+        regionInfo.setId(Long.valueOf(branch.getRegion().getId()));
         regionInfo.setRgnName(branch.getRegion().getRgnName());
         regionInfo.setRgnDes(branch.getRegion().getRgnDes());
         dto.setRegion(regionInfo);
 
-        // Set target info if exists
-        TargetEntity target = targetRepo.findByBranch(branch).orElse(null);
-        if (target != null) {
+        // Set target info if exists - get the latest target
+        List<TargetEntity> targets = targetRepo.findLatestByBranch(branch);
+        if (!targets.isEmpty()) {
+            TargetEntity target = targets.get(0); // Get the most recent target
             TargetInfoDTO targetInfo = new TargetInfoDTO();
             targetInfo.setId(target.getId());
             targetInfo.setTarget(target.getTarget());
@@ -133,9 +176,10 @@ public class BranchServiceImpl implements BranchService {
             dto.setTarget(targetInfo);
         }
 
-        // Set collection info if exists
-        CollectionEntity collection = collectionRepo.findByBranch(branch).orElse(null);
-        if (collection != null) {
+        // Set collection info if exists - get the latest collection
+        List<CollectionEntity> collections = collectionRepo.findLatestByBranch(branch);
+        if (!collections.isEmpty()) {
+            CollectionEntity collection = collections.get(0); // Get the most recent collection
             CollectionInfoDTO collectionInfo = new CollectionInfoDTO();
             collectionInfo.setId(collection.getId());
             collectionInfo.setTarget(collection.getTarget());

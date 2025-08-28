@@ -4,7 +4,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.util.Map;
 import io.jsonwebtoken.Claims;
@@ -17,9 +16,9 @@ public class JWTservice {
 
     public JWTservice() {
         try{
-            SecretKey key = KeyGenerator.getInstance("HmacSHA256")
-                    .generateKey();
-            secretKey = Keys.hmacShaKeyFor(key.getEncoded());
+            // Use a fixed secret key instead of generating new one each time
+            String secretString = "mySecretKeyForJWTTokenGenerationUserReportSystemVeryLongSecretKey123456789";
+            secretKey = Keys.hmacShaKeyFor(secretString.getBytes());
         }catch(Exception e){
             throw new RuntimeException(e);
         }
@@ -30,7 +29,7 @@ public class JWTservice {
                 .claims(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis()+1000*60*15))
+                .expiration(new Date(System.currentTimeMillis()+1000*60*60*24)) // 24 hours instead of 15 minutes
                 .signWith(secretKey)
                 .compact();
     }

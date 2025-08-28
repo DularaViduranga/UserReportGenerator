@@ -42,3 +42,36 @@ button:focus {
 .p-1 { padding: 0.5rem; }
 .p-2 { padding: 1rem; }
 .p-3 { padding: 1.5rem; }
+
+/* Global SweetAlert2 Styles */
+.swal-popup {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.swal-title {
+  font-size: 24px !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+}
+
+.swal-html {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+.swal2-confirm {
+  border-radius: 6px !important;
+  padding: 10px 20px !important;
+  font-weight: 600 !important;
+}
+
+.swal2-cancel {
+  border-radius: 6px !important;
+  padding: 10px 20px !important;
+  font-weight: 600 !important;
+}
+
+.swal2-progress-bar {
+  background-color: #28a745 !important;
+}

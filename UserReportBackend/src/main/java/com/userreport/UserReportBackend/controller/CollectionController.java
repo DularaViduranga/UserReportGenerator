@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.controller;
 
-import com.userreport.UserReportBackend.dto.collection.CollectionSaveRequestDTO;
-import com.userreport.UserReportBackend.dto.collection.CollectionSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.collection.CollectionUpdateRequestDTO;
-import com.userreport.UserReportBackend.dto.collection.CollectionResponseDTO;
+import com.userreport.UserReportBackend.dto.collection.*;
 import com.userreport.UserReportBackend.entity.CollectionEntity;
 import com.userreport.UserReportBackend.services.CollectionService;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +29,7 @@ public class CollectionController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CollectionSaveResponseDTO> updateCollection(@PathVariable Long id,
                                                                       @RequestBody CollectionUpdateRequestDTO collectionUpdateRequestDTO) {
         CollectionSaveResponseDTO response = collectionService.updateCollection(id, collectionUpdateRequestDTO);
@@ -49,7 +46,7 @@ public class CollectionController {
     @GetMapping("/all")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllCollections() {
-        List<CollectionEntity> collections = collectionService.getAllCollections();
+        List<CollectionResponseDTO> collections = collectionService.getAllCollectionResponses();
         if (collections.isEmpty()) {
             return ResponseEntity.ok("No collections found");
         }
@@ -66,31 +63,113 @@ public class CollectionController {
         return ResponseEntity.ok(collections);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/getCollectionById/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CollectionEntity> getCollectionById(@PathVariable Long id) {
-        CollectionEntity collection = collectionService.getCollectionById(id);
+    public ResponseEntity<CollectionResponseDTO> getCollectionById(@PathVariable Long id) {
+        CollectionResponseDTO collection = collectionService.getCollectionResponseById(id);
         return ResponseEntity.ok(collection);
     }
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping("/getCollectionByBranchId/{branchId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CollectionEntity> getCollectionByBranchId(@PathVariable Long branchId) {
-        CollectionEntity collection = collectionService.getCollectionByBranchId(branchId);
+    public ResponseEntity<CollectionResponseDTO> getCollectionByBranchId(@PathVariable Long branchId) {
+        CollectionResponseDTO collection = collectionService.getCollectionResponseByBranchId(branchId);
         return ResponseEntity.ok(collection);
     }
 
-    @GetMapping("/region/{regionId}")
+    @GetMapping("/branch/{branchId}/year/{year}/month/{month}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<CollectionEntity>> getCollectionsByRegionId(@PathVariable Long regionId) {
-        List<CollectionEntity> collections = collectionService.getCollectionsByRegionId(regionId);
+    public ResponseEntity<CollectionResponseDTO> getCollectionByBranchIdAndYearMonth(@PathVariable Long branchId,
+                                                                                @PathVariable Integer year,
+                                                                                @PathVariable Integer month) {
+        CollectionResponseDTO collection = collectionService.getCollectionResponseByBranchIdAndYearMonth(branchId, year, month);
+        return ResponseEntity.ok(collection);
+    }
+
+    @GetMapping("/branch/{branchId}/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByBranchIdAndYear(@PathVariable Long branchId,
+                                                                                  @PathVariable Integer year) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByBranchIdAndYear(branchId, year);
         return ResponseEntity.ok(collections);
     }
 
-    @GetMapping("/percentage/{threshold}")
+    @GetMapping("/getCollectionsByRegionId/{regionId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<CollectionEntity>> getCollectionsByPercentageThreshold(@PathVariable BigDecimal threshold) {
-        List<CollectionEntity> collections = collectionService.getCollectionsByPercentageThreshold(threshold);
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByRegionId(@PathVariable Long regionId) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByRegionId(regionId);
         return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/region/{regionId}/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByRegionIdAndYearMonth(@PathVariable Long regionId,
+                                                                                       @PathVariable Integer year,
+                                                                                       @PathVariable Integer month) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByRegionIdAndYearMonth(regionId, year, month);
+        return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/getCollectionsByPercentageThreshold/{threshold}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByPercentageThreshold(@PathVariable BigDecimal threshold) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByPercentageThreshold(threshold);
+        return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByYear(@PathVariable Integer year) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByYear(year);
+        return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByYearAndMonth(@PathVariable Integer year,
+                                                                               @PathVariable Integer month) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByYearAndMonth(year, month);
+        return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/region/{regionId}/total/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<BigDecimal> getTotalCollectionByRegionAndYearMonth(@PathVariable Long regionId,
+                                                                             @PathVariable Integer year,
+                                                                             @PathVariable Integer month) {
+        BigDecimal totalCollection = collectionService.getTotalCollectionByRegionAndYearMonth(regionId, year, month);
+        return ResponseEntity.ok(totalCollection);
+    }
+
+    @GetMapping("/summary/monthly/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MonthlyCollectionSummaryDTO> getMonthlyCollectionSummary(@PathVariable Integer year,
+                                                                                   @PathVariable Integer month) {
+        MonthlyCollectionSummaryDTO summary = collectionService.getMonthlyCollectionSummary(year, month);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/monthly/region/{regionId}/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MonthlyCollectionSummaryDTO> getMonthlyCollectionSummaryByRegion(@PathVariable Long regionId,
+                                                                                           @PathVariable Integer year,
+                                                                                           @PathVariable Integer month) {
+        MonthlyCollectionSummaryDTO summary = collectionService.getMonthlyCollectionSummaryByRegion(regionId, year, month);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/yearly/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<YearlyCollectionSummaryDTO> getYearlyCollectionSummary(@PathVariable Integer year) {
+        YearlyCollectionSummaryDTO summary = collectionService.getYearlyCollectionSummary(year);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/yearly/region/{regionId}/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<YearlyCollectionSummaryDTO> getYearlyCollectionSummaryByRegion(@PathVariable Long regionId,
+                                                                                         @PathVariable Integer year) {
+        YearlyCollectionSummaryDTO summary = collectionService.getYearlyCollectionSummaryByRegion(regionId, year);
+        return ResponseEntity.ok(summary);
     }
 }

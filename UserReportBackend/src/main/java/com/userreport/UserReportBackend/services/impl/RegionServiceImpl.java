@@ -107,6 +107,29 @@ public class RegionServiceImpl implements RegionService {
         }
     }
 
+    @Override
+    public List<RegionResponseDTO> getAllRegionResponses() {
+        List<RegionEntity> regions = regionRepo.findAll();
+        return regions.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RegionSummaryDTO> getAllRegionSummaries() {
+        List<RegionEntity> regions = regionRepo.findAll();
+        return regions.stream()
+                .map(this::convertToSummaryDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public RegionResponseDTO getRegionResponseById(Long id) {
+        RegionEntity region = regionRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Region not found with id: " + id));
+        return convertToResponseDTO(region);
+    }
+
 
     private RegionResponseDTO convertToResponseDTO(RegionEntity region) {
         RegionResponseDTO dto = new RegionResponseDTO();
@@ -138,7 +161,7 @@ public class RegionServiceImpl implements RegionService {
         dto.setId(branch.getId());
         dto.setBrnName(branch.getBrnName());
         dto.setBrnDes(branch.getBrnDes());
-        dto.setHasTarget(branch.getTarget() != null);
+        dto.setHasTarget(!branch.getTargets().isEmpty());
         dto.setHasCollection(false); // Will be set based on collection relationship
         return dto;
     }

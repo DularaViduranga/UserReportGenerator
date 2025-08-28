@@ -1,0 +1,207 @@
+<div class="analytics-container">
+  <div class="header">
+    <h2>Achievement Analytics</h2>
+    <p>Visualize target vs achievement performance across regions and time periods</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label for="viewMode">View Mode:</label>
+        <select 
+          id="viewMode" 
+          [(ngModel)]="viewMode" 
+          (change)="onFiltersChange()"
+          class="form-control">
+          <option value="regional">Regional Analysis</option>
+          <option value="monthly">Monthly Trends</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="year">Year:</label>
+        <select 
+          id="year" 
+          [(ngModel)]="selectedYear" 
+          (change)="onFiltersChange()"
+          class="form-control">
+          <option *ngFor="let year of years" [value]="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group" *ngIf="viewMode === 'regional'">
+        <label for="month">Month:</label>
+        <select 
+          id="month" 
+          [(ngModel)]="selectedMonth" 
+          (change)="onFiltersChange()"
+          class="form-control">
+          <option *ngFor="let month of months" [value]="month.value">
+            {{ month.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group" *ngIf="viewMode === 'regional'">
+        <label for="region">Region:</label>
+        <select 
+          id="region" 
+          [(ngModel)]="selectedRegionId" 
+          (change)="onFiltersChange()"
+          class="form-control">
+          <option value="">All Regions</option>
+          <option *ngFor="let region of regions" [value]="region.id">
+            {{ region.rgnName }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner-large"></div>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <!-- Overall Summary -->
+  <div class="summary-section" *ngIf="!loading && viewMode === 'regional'">
+    <div class="summary-card">
+      <h3>Overall Performance Summary</h3>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <div class="stat-value">{{ totalTarget | currency:'USD':'symbol':'1.0-0' }}</div>
+          <div class="stat-label">Total Target</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ totalCollection | currency:'USD':'symbol':'1.0-0' }}</div>
+          <div class="stat-label">Total Collection</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" [ngClass]="'status-' + getAchievementStatus(overallAchievement)">
+            {{ overallAchievement }}%
+          </div>
+          <div class="stat-label">Achievement Rate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regional Chart View -->
+  <div class="chart-section" *ngIf="!loading && viewMode === 'regional'">
+    <div class="chart-container">
+      <h3>Regional Performance Analysis</h3>
+      
+      <div class="chart-content" *ngIf="chartData.length > 0; else noRegionalData">
+        <div class="chart-item" *ngFor="let region of chartData">
+          <div class="region-header">
+            <h4>{{ region.regionName }}</h4>
+            <div class="region-achievement" [ngClass]="'status-' + getAchievementStatus(region.achievementPercentage)">
+              {{ region.achievementPercentage }}%
+            </div>
+          </div>
+          
+          <div class="region-bars">
+            <div class="bar-row">
+              <span class="bar-label">Target:</span>
+              <div class="bar-container">
+                <div class="bar target-bar" 
+                     [style.width.%]="getBarWidth(region.targetAmount, getMaxValue(chartData, 'targetAmount'))">
+                </div>
+                <span class="bar-value">{{ region.targetAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+            
+            <div class="bar-row">
+              <span class="bar-label">Collection:</span>
+              <div class="bar-container">
+                <div class="bar collection-bar" 
+                     [style.width.%]="getBarWidth(region.collectionAmount, getMaxValue(chartData, 'targetAmount'))">
+                </div>
+                <span class="bar-value">{{ region.collectionAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Branch Details -->
+          <div class="branch-details" *ngIf="region.branches.length > 0">
+            <h5>Branch Performance:</h5>
+            <div class="branch-item" *ngFor="let branch of region.branches">
+              <div class="branch-info">
+                <span class="branch-name">{{ branch.branchName }}</span>
+                <span class="branch-achievement" [ngClass]="'status-' + getAchievementStatus(branch.achievementPercentage)">
+                  {{ branch.achievementPercentage }}%
+                </span>
+              </div>
+              <div class="branch-mini-bars">
+                <div class="mini-bar target-mini" 
+                     [style.width.%]="getBarWidth(branch.targetAmount, getMaxValue(region.branches, 'targetAmount'))">
+                </div>
+                <div class="mini-bar collection-mini" 
+                     [style.width.%]="getBarWidth(branch.collectionAmount, getMaxValue(region.branches, 'targetAmount'))">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noRegionalData>
+        <div class="no-data">
+          <h4>No data available</h4>
+          <p>No performance data found for the selected filters.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Monthly Trends Chart -->
+  <div class="chart-section" *ngIf="!loading && viewMode === 'monthly'">
+    <div class="chart-container">
+      <h3>Monthly Performance Trends - {{ selectedYear }}</h3>
+      
+      <div class="monthly-chart" *ngIf="monthlyData.length > 0; else noMonthlyData">
+        <div class="month-item" *ngFor="let month of monthlyData">
+          <div class="month-header">
+            <span class="month-name">{{ month.month }}</span>
+            <span class="month-achievement" [ngClass]="'status-' + getAchievementStatus(month.achievement)">
+              {{ month.achievement }}%
+            </span>
+          </div>
+          
+          <div class="month-bars">
+            <div class="monthly-bar-row">
+              <span class="monthly-bar-label">Target:</span>
+              <div class="monthly-bar-container">
+                <div class="monthly-bar target-monthly-bar" 
+                     [style.width.%]="getBarWidth(month.target, getMaxValue(monthlyData, 'target'))">
+                </div>
+                <span class="monthly-bar-value">{{ month.target | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+            
+            <div class="monthly-bar-row">
+              <span class="monthly-bar-label">Collection:</span>
+              <div class="monthly-bar-container">
+                <div class="monthly-bar collection-monthly-bar" 
+                     [style.width.%]="getBarWidth(month.collection, getMaxValue(monthlyData, 'target'))">
+                </div>
+                <span class="monthly-bar-value">{{ month.collection | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noMonthlyData>
+        <div class="no-data">
+          <h4>No monthly data available</h4>
+          <p>No performance data found for {{ selectedYear }}.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

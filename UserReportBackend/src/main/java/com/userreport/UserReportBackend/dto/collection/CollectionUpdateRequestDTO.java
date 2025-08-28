@@ -13,4 +13,6 @@ public class CollectionUpdateRequestDTO {
     private BigDecimal target;
     private BigDecimal due;
     private BigDecimal collectionAmount;
+    private Integer collectionYear;
+    private Integer collectionMonth;
 }

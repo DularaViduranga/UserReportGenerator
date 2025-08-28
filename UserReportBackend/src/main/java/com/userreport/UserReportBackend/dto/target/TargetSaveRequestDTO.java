@@ -11,5 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TargetSaveRequestDTO {
     private BigDecimal target;
+    private Integer targetYear;
+    private Integer targetMonth;
     private Long branchId;
 }

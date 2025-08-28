@@ -13,8 +13,12 @@ import java.time.LocalDateTime;
 public class TargetResponseDTO {
     private Long id;
     private BigDecimal target;
+    private Integer targetYear;
+    private Integer targetMonth;
     private String branchName;
     private String regionName;
     private LocalDateTime createdDatetime;
     private LocalDateTime modifyDatetime;
+    private String createdByUsername;
+    private String modifyByUsername;
 }

@@ -28,7 +28,7 @@ public class RegionEntity {
 
     // One-to-Many: One Region has many Branches
     @OneToMany(mappedBy = "region", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private List<BranchEntity> branches = new ArrayList<>();
 
     // Constructor for creating a new Region

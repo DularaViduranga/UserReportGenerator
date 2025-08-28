@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.controller;
 
-import com.userreport.UserReportBackend.dto.target.TargetSaveRequestDTO;
-import com.userreport.UserReportBackend.dto.target.TargetSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.target.TargetUpdateRequestDTO;
-import com.userreport.UserReportBackend.dto.target.TargetResponseDTO;
+import com.userreport.UserReportBackend.dto.target.*;
 import com.userreport.UserReportBackend.entity.TargetEntity;
 import com.userreport.UserReportBackend.services.TargetService;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +29,7 @@ public class TargetController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TargetSaveResponseDTO> updateTarget(@PathVariable Long id,
                                                               @RequestBody TargetUpdateRequestDTO targetUpdateRequestDTO) {
         TargetSaveResponseDTO response = targetService.updateTarget(id, targetUpdateRequestDTO);
@@ -49,16 +46,6 @@ public class TargetController {
     @GetMapping("/all")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllTargets() {
-        List<TargetEntity> targets = targetService.getAllTargets();
-        if (targets.isEmpty()) {
-            return ResponseEntity.ok("No targets found");
-        }
-        return ResponseEntity.ok(targets);
-    }
-
-    @GetMapping("/responses")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getAllTargetResponses() {
         List<TargetResponseDTO> targets = targetService.getAllTargetResponses();
         if (targets.isEmpty()) {
             return ResponseEntity.ok("No targets found");
@@ -66,31 +53,72 @@ public class TargetController {
         return ResponseEntity.ok(targets);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/targetById/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TargetEntity> getTargetById(@PathVariable Long id) {
-        TargetEntity target = targetService.getTargetById(id);
+    public ResponseEntity<TargetResponseDTO> getTargetById(@PathVariable Long id) {
+        TargetResponseDTO target = targetService.getTargetResponseById(id);
         return ResponseEntity.ok(target);
     }
 
     @GetMapping("/branch/{branchId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TargetEntity> getTargetByBranchId(@PathVariable Long branchId) {
-        TargetEntity target = targetService.getTargetByBranchId(branchId);
+    public ResponseEntity<TargetResponseDTO> getTargetByBranchId(@PathVariable Long branchId) {
+        TargetResponseDTO target = targetService.getTargetResponseByBranchId(branchId);
         return ResponseEntity.ok(target);
+    }
+
+    @GetMapping("/branch/{branchId}/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TargetResponseDTO> getTargetByBranchIdAndYearMonth(@PathVariable Long branchId,
+                                                                        @PathVariable Integer year,
+                                                                        @PathVariable Integer month) {
+        TargetResponseDTO target = targetService.getTargetResponseByBranchIdAndYearMonth(branchId, year, month);
+        return ResponseEntity.ok(target);
+    }
+
+    @GetMapping("/branch/{branchId}/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByBranchIdAndYear(@PathVariable Long branchId,
+                                                                          @PathVariable Integer year) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByBranchIdAndYear(branchId, year);
+        return ResponseEntity.ok(targets);
     }
 
     @GetMapping("/region/{regionId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TargetEntity>> getTargetsByRegionId(@PathVariable Long regionId) {
-        List<TargetEntity> targets = targetService.getTargetsByRegionId(regionId);
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByRegionId(@PathVariable Long regionId) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByRegionId(regionId);
+        return ResponseEntity.ok(targets);
+    }
+
+    @GetMapping("/region/{regionId}/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByRegionIdAndYearMonth(@PathVariable Long regionId,
+                                                                               @PathVariable Integer year,
+                                                                               @PathVariable Integer month) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByRegionIdAndYearMonth(regionId, year, month);
         return ResponseEntity.ok(targets);
     }
 
     @GetMapping("/minimum/{amount}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TargetEntity>> getTargetsByMinimumAmount(@PathVariable BigDecimal amount) {
-        List<TargetEntity> targets = targetService.getTargetsByMinimumAmount(amount);
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByMinimumAmount(@PathVariable BigDecimal amount) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByMinimumAmount(amount);
+        return ResponseEntity.ok(targets);
+    }
+
+    @GetMapping("/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByYear(@PathVariable Integer year) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByYear(year);
+        return ResponseEntity.ok(targets);
+    }
+
+    @GetMapping("/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<TargetResponseDTO>> getTargetsByYearAndMonth(@PathVariable Integer year,
+                                                                       @PathVariable Integer month) {
+        List<TargetResponseDTO> targets = targetService.getTargetResponsesByYearAndMonth(year, month);
         return ResponseEntity.ok(targets);
     }
 
@@ -99,5 +127,46 @@ public class TargetController {
     public ResponseEntity<BigDecimal> getTotalTargetByRegion(@PathVariable Long regionId) {
         BigDecimal totalTarget = targetService.getTotalTargetByRegion(regionId);
         return ResponseEntity.ok(totalTarget);
+    }
+
+    @GetMapping("/region/{regionId}/total/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<BigDecimal> getTotalTargetByRegionAndYearMonth(@PathVariable Long regionId,
+                                                                         @PathVariable Integer year,
+                                                                         @PathVariable Integer month) {
+        BigDecimal totalTarget = targetService.getTotalTargetByRegionAndYearMonth(regionId, year, month);
+        return ResponseEntity.ok(totalTarget);
+    }
+
+    @GetMapping("/summary/monthly/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MonthlyTargetSummaryDTO> getMonthlyTargetSummary(@PathVariable Integer year,
+                                                                           @PathVariable Integer month) {
+        MonthlyTargetSummaryDTO summary = targetService.getMonthlyTargetSummary(year, month);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/monthly/region/{regionId}/year/{year}/month/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MonthlyTargetSummaryDTO> getMonthlyTargetSummaryByRegion(@PathVariable Long regionId,
+                                                                                   @PathVariable Integer year,
+                                                                                   @PathVariable Integer month) {
+        MonthlyTargetSummaryDTO summary = targetService.getMonthlyTargetSummaryByRegion(regionId, year, month);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/yearly/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<YearlyTargetSummaryDTO> getYearlyTargetSummary(@PathVariable Integer year) {
+        YearlyTargetSummaryDTO summary = targetService.getYearlyTargetSummary(year);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/yearly/region/{regionId}/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<YearlyTargetSummaryDTO> getYearlyTargetSummaryByRegion(@PathVariable Long regionId,
+                                                                                 @PathVariable Integer year) {
+        YearlyTargetSummaryDTO summary = targetService.getYearlyTargetSummaryByRegion(regionId, year);
+        return ResponseEntity.ok(summary);
     }
 }

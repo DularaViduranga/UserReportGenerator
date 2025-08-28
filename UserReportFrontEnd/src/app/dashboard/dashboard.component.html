@@ -1,15 +1,39 @@
 <div class="dashboard-container">
   <h2>Dashboard</h2>
-  <p class="welcome-message">Welcome, {{ auth.getRole() }}!</p>
+  <p class="welcome-message">Welcome, {{ auth.getUsername() }}!</p>
+  
+  <!-- Quick Actions Grid -->
+  <div class="quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="actions-grid">
+      <div class="action-card">
+        <div class="action-icon target-icon">🎯</div>
+        <h4>Target Management</h4>
+        <a routerLink="/targets" class="action-btn">Manage Targets</a>
+      </div>
+      
+      <div class="action-card">
+        <div class="action-icon collection-icon">💰</div>
+        <h4>Collection Management</h4>
+        <a routerLink="/collections" class="action-btn">Record Collections</a>
+      </div>
+      
+      <div class="action-card">
+        <div class="action-icon analytics-icon">📊</div>
+        <h4>Analytics & Reports</h4>
+        <a routerLink="/analytics" class="action-btn">View Analytics</a>
+      </div>
+    </div>
+  </div>
   
   <div class="admin-section" *ngIf="auth.getRole() === 'ADMIN'">
-    <a routerLink="/admin/users" class="admin-link">Go to Admin Panel</a>
+    <h3>Admin Functions</h3>
+    <div class="admin-actions">
+      <a routerLink="/admin/users" class="admin-link">User Management</a>
+    </div>
   </div>
   
-  <div class="user-info">
-    <p>Role: {{ auth.getRole() }}</p>
-    <p>Logged in: {{ auth.isLoggedIn() ? 'Yes' : 'No' }}</p>
+  <div class="logout-section">
+    <button class="logout-btn" (click)="auth.logout()">Logout</button>
   </div>
-  
-  <button class="logout-btn" (click)="auth.logout()">Logout</button>
 </div>

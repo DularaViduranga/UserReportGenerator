@@ -1,8 +1,6 @@
 package com.userreport.UserReportBackend.controller;
 
-import com.userreport.UserReportBackend.dto.region.RegionSaveRequestDTO;
-import com.userreport.UserReportBackend.dto.region.RegionSaveResponseDTO;
-import com.userreport.UserReportBackend.dto.region.RegionDescriptionUpdateRequestDTO;
+import com.userreport.UserReportBackend.dto.region.*;
 import com.userreport.UserReportBackend.entity.RegionEntity;
 import com.userreport.UserReportBackend.services.RegionService;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +29,7 @@ public class RegionController {
     @GetMapping("/all")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllRegions() {
-        List<RegionEntity> regions = regionService.getAllRegions();
+        List<RegionResponseDTO> regions = regionService.getAllRegionResponses();
         if (regions.isEmpty()) {
             return ResponseEntity.ok("No regions found");
         }
@@ -59,5 +57,21 @@ public class RegionController {
         return ResponseEntity.ok("Region deleted successfully");
     }
 
+    @GetMapping("/summaries")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAllRegionSummaries() {
+        List<RegionSummaryDTO> regions = regionService.getAllRegionSummaries();
+        if (regions.isEmpty()) {
+            return ResponseEntity.ok("No regions found");
+        }
+        return ResponseEntity.ok(regions);
+    }
+
+    @GetMapping("/response/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RegionResponseDTO> getRegionResponseById(@PathVariable Long id) {
+        RegionResponseDTO region = regionService.getRegionResponseById(id);
+        return ResponseEntity.ok(region);
+    }
 
 }
