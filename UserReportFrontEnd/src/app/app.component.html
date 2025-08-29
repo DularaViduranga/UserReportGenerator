@@ -10,6 +10,7 @@
       <a routerLink="/collections" routerLinkActive="active" class="nav-link">Collections</a>
       <a routerLink="/analytics" routerLinkActive="active" class="nav-link">Analytics</a>
       <a *ngIf="auth.getRole() === 'ADMIN'" routerLink="/admin/users" routerLinkActive="active" class="nav-link admin-link">Admin</a>
+      <a *ngIf="auth.getRole() === 'ADMIN'" routerLink="/admin/regions" routerLinkActive="active" class="nav-link">Regions</a>
     </ng-container>
     
     <!-- Guest User Links -->

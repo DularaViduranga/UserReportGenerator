@@ -26,6 +26,16 @@ export const routes: Routes = [
     loadComponent: () => import('./components/analytics/analytics.component').then(m => m.AnalyticsComponent), 
     canActivate: [AuthGuard] 
   },
+  { 
+    path: 'admin/regions', 
+    loadComponent: () => import('./components/region-management/region-management.component').then(m => m.RegionManagementComponent), 
+    canActivate: [AuthGuard] 
+  },
+  { 
+    path: 'admin/branches/:regionId', 
+    loadComponent: () => import('./components/branch-management/branch-management.component').then(m => m.BranchManagementComponent), 
+    canActivate: [AuthGuard] 
+  },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

@@ -11,8 +11,8 @@
   <div class="form-container">
     <form (ngSubmit)="submitCollection()" #collectionForm="ngForm">
       
-      <!-- Region Selection -->
-      <div class="form-group">
+      <!-- Region Selection - Only for Admin Users -->
+      <div class="form-group" *ngIf="isAdmin">
         <label for="region">Select Region *</label>
         <select 
           id="region" 
@@ -28,8 +28,8 @@
         </select>
       </div>
 
-      <!-- Branch Selection -->
-      <div class="form-group">
+      <!-- Branch Selection - Only for Admin Users -->
+      <div class="form-group" *ngIf="isAdmin">
         <label for="branch">Select Branch *</label>
         <select 
           id="branch" 
@@ -39,11 +39,20 @@
           class="form-control"
           [disabled]="!selectedRegionId || branches.length === 0"
           required>
-          <option value="">-- Select Branch --</option>
+          <option [value]="null">-- Select Branch --</option>
           <option *ngFor="let branch of branches" [value]="branch.id">
             {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
           </option>
         </select>
+      </div>
+
+      <!-- Branch Display - For Branch Users -->
+      <div class="form-group branch-display" *ngIf="!isAdmin && authService.getUserBranchName()">
+        <label>Your Branch:</label>
+        <div class="branch-info">
+          <i class="fas fa-building"></i>
+          <span class="branch-name">{{ authService.getUserBranchName() }}</span>
+        </div>
       </div>
 
       <!-- Year and Month Selection -->
@@ -88,6 +97,12 @@
             <span class="info">📝 No collection recorded for this period</span>
           </div>
         </div>
+      </div>
+
+      <!-- Admin Update Mode Message -->
+      <div class="alert alert-info" *ngIf="isUpdateMode && isAdmin && existingCollection">
+        <i class="fas fa-edit"></i>
+        <strong>Update Mode:</strong> You are updating an existing collection. Enter the new amount below.
       </div>
 
       <!-- Collection Amount -->

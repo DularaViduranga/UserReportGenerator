@@ -11,39 +11,53 @@
   <div class="form-container">
     <form (ngSubmit)="submitTarget()" #targetForm="ngForm">
       
-      <!-- Region Selection -->
-      <div class="form-group">
-        <label for="region">Select Region *</label>
-        <select 
-          id="region" 
-          [(ngModel)]="selectedRegionId" 
-          name="region" 
-          (change)="onRegionChange()"
-          class="form-control"
-          required>
-          <option value="">-- Select Region --</option>
-          <option *ngFor="let region of regions" [value]="region.id">
-            {{ region.rgnName }}
-          </option>
-        </select>
+      <!-- Admin Section: Full Region and Branch Selection -->
+      <div *ngIf="authService.isAdminUser()">
+        <!-- Region Selection -->
+        <div class="form-group">
+          <label for="region">Select Region *</label>
+          <select 
+            id="region" 
+            [(ngModel)]="selectedRegionId" 
+            name="region" 
+            (change)="onRegionChange()"
+            class="form-control"
+            required>
+            <option value="">-- Select Region --</option>
+            <option *ngFor="let region of regions" [value]="region.id">
+              {{ region.rgnName }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Branch Selection -->
+        <div class="form-group">
+          <label for="branch">Select Branch *</label>
+          <select 
+            id="branch" 
+            [(ngModel)]="selectedBranchId" 
+            name="branch"
+            (change)="onSelectionChange()"
+            class="form-control"
+            [disabled]="!selectedRegionId || branches.length === 0"
+            required>
+            <option value="">-- Select Branch --</option>
+            <option *ngFor="let branch of branches" [value]="branch.id">
+              {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
+            </option>
+          </select>
+        </div>
       </div>
 
-      <!-- Branch Selection -->
-      <div class="form-group">
-        <label for="branch">Select Branch *</label>
-        <select 
-          id="branch" 
-          [(ngModel)]="selectedBranchId" 
-          name="branch"
-          (change)="onSelectionChange()"
-          class="form-control"
-          [disabled]="!selectedRegionId || branches.length === 0"
-          required>
-          <option value="">-- Select Branch --</option>
-          <option *ngFor="let branch of branches" [value]="branch.id">
-            {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
-          </option>
-        </select>
+      <!-- Branch User Section: Show Branch Info Only -->
+      <div *ngIf="!authService.isAdminUser()" class="branch-user-info">
+        <div class="form-group">
+          <label>Your Branch</label>
+          <div class="branch-display">
+            <span class="branch-name">{{ authService.getUserBranchName() || 'Loading...' }}</span>
+            <small class="branch-note">Targets will be created for your branch automatically</small>
+          </div>
+        </div>
       </div>
 
       <!-- Year and Month Selection -->

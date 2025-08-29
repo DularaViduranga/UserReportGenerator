@@ -111,3 +111,108 @@
   margin-bottom: 1rem;
   text-align: center;
 }
+
+/* Role badge styling */
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.admin {
+  background-color: #28a745;
+  color: white;
+}
+
+.role-badge.user {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* Role change buttons */
+.role-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-right: 5px;
+}
+
+.role-btn.make-admin {
+  background-color: #28a745;
+  color: white;
+}
+
+.role-btn.make-admin:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.role-btn.make-user {
+  background-color: #6c757d;
+  color: white;
+}
+
+.role-btn.make-user:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.role-btn:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.role-btn:disabled:hover {
+  transform: none;
+}
+
+/* Update delete button styling */
+.delete-btn {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.delete-btn:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.delete-btn:disabled:hover {
+  transform: none;
+}
+
+/* Table improvements */
+.user-table th:nth-child(4),
+.user-table th:nth-child(5),
+.user-table th:nth-child(6) {
+  text-align: center;
+}
+
+.user-table td:nth-child(4),
+.user-table td:nth-child(5),
+.user-table td:nth-child(6) {
+  text-align: center;
+}

@@ -1,7 +1,7 @@
 <div class="admin-container">
   <h3>Admin Panel - Manage Users</h3>
   
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <!-- Remove the error div and keep only success messages -->
   <div *ngIf="success" class="success">{{ success }}</div>
   
   <button class="refresh-btn" (click)="loadUsers()">Refresh Users</button>
@@ -12,7 +12,8 @@
         <th>Name</th>
         <th>Email</th>
         <th>Username</th>
-        <th>Role</th>
+        <th>Current Role</th>
+        <th>Change Role</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -22,13 +23,26 @@
         <td>{{ user.email }}</td>
         <td>{{ user.username }}</td>
         <td>
-          <select (change)="updateRole(user.id, $any($event.target).value)" [value]="user.role">
-            <option value="USER">User</option>
-            <option value="ADMIN">Admin</option>
-          </select>
+          <span class="role-badge" [class]="user.role.toLowerCase()">
+            {{ user.role }}
+          </span>
         </td>
         <td>
-          <button class="delete-btn" (click)="deleteUser(user.id)">Delete</button>
+          <button 
+            class="role-btn" 
+            [class]="user.role === 'ADMIN' ? 'make-user' : 'make-admin'"
+            (click)="changeUserRole(user.id, user.role === 'ADMIN' ? 'USER' : 'ADMIN', user.username)"
+            [disabled]="user.username === getCurrentUsername()">
+            {{ user.role === 'ADMIN' ? 'Make User' : 'Make Admin' }}
+          </button>
+        </td>
+        <td>
+          <button 
+            class="delete-btn" 
+            (click)="deleteUser(user.id, user.username)"
+            [disabled]="user.username === getCurrentUsername()">
+            Delete
+          </button>
         </td>
       </tr>
     </tbody>

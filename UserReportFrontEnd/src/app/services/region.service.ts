@@ -33,6 +33,6 @@ export class RegionService {
   }
 
   deleteRegion(id: number): Observable<any> {
-    return this.http.delete<any>(`${this.API_URL}/delete/${id}`);
+    return this.http.delete(`${this.API_URL}/delete/${id}`, { responseType: 'text' });
   }
 }

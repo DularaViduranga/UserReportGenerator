@@ -59,7 +59,7 @@ export class CollectionManagementComponent implements OnInit {
     private branchService: BranchService,
     private targetService: TargetService,
     private collectionService: CollectionService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {
     // Generate years (current year - 5 to current year + 5)
@@ -83,13 +83,35 @@ export class CollectionManagementComponent implements OnInit {
       return;
     }
 
-    console.log('User is authenticated, proceeding to load regions');
+    console.log('User is authenticated, proceeding to initialize');
     
     // Check if user is admin
-    this.isAdmin = this.authService.isAdmin();
+    this.isAdmin = this.authService.isAdminUser();
     console.log('User is admin:', this.isAdmin);
     
-    this.loadRegions();
+    if (this.isAdmin) {
+      // Admin can see all regions and branches
+      this.loadRegions();
+    } else {
+      // Branch user - auto-select their branch
+      this.autoSelectUserBranch();
+    }
+  }
+
+  private autoSelectUserBranch(): void {
+    const userBranchId = this.authService.getUserBranchId();
+    const userBranchName = this.authService.getUserBranchName();
+    
+    if (userBranchId && userBranchName) {
+      console.log(`Auto-selecting branch for user: ${userBranchName} (ID: ${userBranchId})`);
+      
+      this.selectedBranchId = userBranchId;
+      // You might need to load the branch details to get region info
+      // For now, we'll trigger the selection change
+      this.onSelectionChange();
+    } else {
+      this.showMessage('Unable to determine your branch. Please contact administrator.', 'error');
+    }
   }
 
   loadRegions(): void {
@@ -168,13 +190,22 @@ export class CollectionManagementComponent implements OnInit {
         console.log('Existing collection found:', collection);
         this.existingCollection = collection;
         this.isUpdateMode = true;
-        this.collectionAmount = collection.collection;
         
         const monthName = this.months.find(m => m.value === this.selectedMonth)?.name;
-        this.showMessage(
-          `Collection already exists for ${monthName} ${this.selectedYear}: ${collection.collection}`, 
-          'error'
-        );
+        
+        if (this.isAdmin) {
+          // For admin users - no error, just switch to update mode silently
+          console.log('Admin user - switching to update mode');
+          this.collectionAmount = 0; // Keep input field empty for new amount
+          this.message = ''; // Clear any error messages
+        } else {
+          // For normal users - show error since they can't update
+          this.collectionAmount = collection.collection;
+          this.showMessage(
+            `Collection already exists for ${monthName} ${this.selectedYear}. Only administrators can update existing collections.`, 
+            'error'
+          );
+        }
       },
       error: (error) => {
         console.log('No existing collection found or error:', error);
@@ -256,7 +287,17 @@ export class CollectionManagementComponent implements OnInit {
 
   showUpdateConfirmation(): void {
     const monthName = this.months.find(m => m.value === this.selectedMonth)?.name;
-    const branchName = this.branches.find(b => b.id === this.selectedBranchId)?.brnName;
+    // Ensure proper type conversion for comparison
+    const branchIdToFind = typeof this.selectedBranchId === 'string' ? 
+      parseInt(this.selectedBranchId) : this.selectedBranchId;
+    const selectedBranch = this.branches.find(b => b.id === branchIdToFind);
+    const branchName = selectedBranch?.brnName || 'Unknown Branch';
+    
+    console.log('Update confirmation - selectedBranchId:', this.selectedBranchId, 'type:', typeof this.selectedBranchId);
+    console.log('Update confirmation - branchIdToFind:', branchIdToFind);
+    console.log('Update confirmation - branches:', this.branches);
+    console.log('Update confirmation - selectedBranch:', selectedBranch);
+    console.log('Update confirmation - branchName:', branchName);
     
     Swal.fire({
       title: 'Update Collection',

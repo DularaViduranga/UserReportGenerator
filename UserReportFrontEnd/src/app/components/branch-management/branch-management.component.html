@@ -1,0 +1,55 @@
+<div class="branch-management-container">
+  <!-- Header Section -->
+  <div class="header">
+    <div class="header-actions">
+      <button class="back-btn" (click)="goBackToRegions()">
+        <i class="fas fa-arrow-left"></i>
+        Back to Regions
+      </button>
+    </div>
+    <h2>Branch Management</h2>
+    <p *ngIf="regionName">Managing branches for: <strong>{{ regionName }}</strong></p>
+  </div>
+
+  <div class="content-wrapper" *ngIf="!loading">
+    <!-- Add Branch Button -->
+    <div class="add-branch-section">
+      <span class="add-branch-text" (click)="addBranch()">Add New Branch</span>
+    </div>
+
+    <!-- Branches Grid -->
+    <div class="branches-grid" *ngIf="branches.length > 0">
+      <!-- Branch Cards -->
+      <div class="branch-card" *ngFor="let branch of branches">
+        <div class="card-content">
+          <div class="card-header">
+            <h3 class="branch-name">{{ branch.brnName }}</h3>
+            <div class="action-buttons">
+              <span class="edit-text" (click)="editBranch(branch)" title="Edit Branch">
+                Edit
+              </span>
+              <span class="delete-text" (click)="deleteBranch(branch)" title="Delete Branch">
+                Delete
+              </span>
+            </div>
+          </div>
+          <p class="branch-description">{{ branch.brnDes || 'No description available' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading branches...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && branches.length === 0" class="empty-state">
+    <i class="fas fa-code-branch"></i>
+    <h3>No Branches Found</h3>
+    <p>There are no branches in this region yet.</p>
+    <span class="add-first-text" (click)="addBranch()">Add First Branch</span>
+  </div>
+</div>

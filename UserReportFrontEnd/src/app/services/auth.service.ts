@@ -64,12 +64,20 @@ export class AuthService {
 
   deleteUser(userId: number): Observable<any> {
     const headers = this.getAuthHeaders();
-    return this.http.delete(`${this.API_URL}/admin/delete-user/${userId}`, { headers });
+    return this.http.delete(`${this.API_URL}/admin/delete-user/${userId}`, { 
+      headers,
+      observe: 'response',
+      responseType: 'text'
+    });
   }
 
   updateUserRole(userId: number, role: string): Observable<any> {
     const headers = this.getAuthHeaders();
-    return this.http.put(`${this.API_URL}/admin/update-role/${userId}?role=${role}`, {}, { headers });
+    return this.http.put(`${this.API_URL}/admin/update-role/${userId}?role=${role}`, {}, { 
+      headers,
+      observe: 'response',
+      responseType: 'text'
+    });
   }
 
   getCurrentUser(): Observable<any> {
@@ -132,6 +140,40 @@ export class AuthService {
       console.error('Error parsing JWT token:', error);
       return '';
     }
+  }
+
+  getUserBranchId(): number | null {
+    if (typeof localStorage === 'undefined') return null;
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.branchId || null;
+    } catch (error) {
+      console.error('Error parsing JWT token for branch ID:', error);
+      return null;
+    }
+  }
+
+  getUserBranchName(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.branchName || null;
+    } catch (error) {
+      console.error('Error parsing JWT token for branch name:', error);
+      return null;
+    }
+  }
+
+  isAdminUser(): boolean {
+    return this.getRole() === 'ADMIN';
+  }
+
+  isBranchUser(): boolean {
+    return this.getRole() === 'USER' && this.getUserBranchId() !== null;
   }
 
   isAdmin(): boolean {

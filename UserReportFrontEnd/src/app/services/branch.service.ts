@@ -47,6 +47,6 @@ export class BranchService {
   }
 
   deleteBranch(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/delete/${id}`);
+    return this.http.delete(`${this.apiUrl}/delete/${id}`, { responseType: 'text' });
   }
 }

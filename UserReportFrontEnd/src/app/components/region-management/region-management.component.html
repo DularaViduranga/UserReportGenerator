@@ -1,0 +1,57 @@
+<div class="region-management-container">
+  <div class="header">
+    <h2>Region Management</h2>
+    <p>Manage regions and their associated branches</p>
+  </div>
+
+  <div class="content-wrapper" *ngIf="!loading">
+    <!-- Add Region Button -->
+    <div class="add-region-section">
+      <span class="add-region-text" (click)="addRegion()">Add New Region</span>
+    </div>
+
+    <!-- Regions Grid -->
+    <div class="regions-grid" *ngIf="regions.length > 0">
+      <!-- Region Cards -->
+      <div class="region-card" *ngFor="let region of regions">
+        <div class="card-content">
+          <div class="card-header">
+            <h3 class="region-name">{{ region.rgnName }}</h3>
+            <div class="action-buttons">
+              <span class="edit-text" (click)="editRegion(region)" title="Edit Region">
+                Edit
+              </span>
+              <span class="delete-text" (click)="deleteRegion(region)" title="Delete Region">
+                Delete
+              </span>
+            </div>
+          </div>
+          <p class="region-description">{{ region.rgnDes || 'No description available' }}</p>
+          <div class="card-actions">
+            <button class="branches-btn" (click)="viewBranches(region.id)">
+              <i class="fas fa-code-branch"></i>
+              Branches
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading regions...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && regions.length === 0">
+    <i class="fas fa-map-marked-alt"></i>
+    <h3>No Regions Found</h3>
+    <p>Start by adding your first region</p>
+    <button class="add-first-btn" (click)="addRegion()">
+      <i class="fas fa-plus"></i>
+      Add First Region
+    </button>
+  </div>
+</div>

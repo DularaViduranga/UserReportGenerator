@@ -55,7 +55,7 @@ export class TargetManagementComponent implements OnInit {
     private regionService: RegionService,
     private branchService: BranchService,
     private targetService: TargetService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {
     // Generate years (current year - 5 to current year + 5)
@@ -76,10 +76,31 @@ export class TargetManagementComponent implements OnInit {
     console.log('User is logged in, token exists:', !!this.authService.getToken());
     
     // Check if user is admin
-    this.isAdmin = this.authService.isAdmin();
+    this.isAdmin = this.authService.isAdminUser();
     console.log('User is admin:', this.isAdmin);
     
-    this.loadRegions();
+    if (this.isAdmin) {
+      // Admin can see all regions and branches
+      this.loadRegions();
+    } else {
+      // Branch user - auto-select their branch
+      this.autoSelectUserBranch();
+    }
+  }
+
+  private autoSelectUserBranch(): void {
+    const userBranchId = this.authService.getUserBranchId();
+    const userBranchName = this.authService.getUserBranchName();
+    
+    if (userBranchId && userBranchName) {
+      console.log(`Auto-selecting branch for user: ${userBranchName} (ID: ${userBranchId})`);
+      
+      this.selectedBranchId = userBranchId;
+      // Trigger selection change to load targets
+      this.onSelectionChange();
+    } else {
+      this.showMessage('Unable to determine your branch. Please contact administrator.', 'error');
+    }
   }
 
   loadRegions(): void {
