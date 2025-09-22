@@ -11,7 +11,7 @@ import { AuthService } from './services/auth.service';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'UserReportFrontEnd';
+  title = 'Excel Uploader';
 
   constructor(public auth: AuthService) {}
 }

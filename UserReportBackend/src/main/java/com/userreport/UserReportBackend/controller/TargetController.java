@@ -3,9 +3,11 @@ package com.userreport.UserReportBackend.controller;
 import com.userreport.UserReportBackend.dto.target.*;
 import com.userreport.UserReportBackend.entity.TargetEntity;
 import com.userreport.UserReportBackend.services.TargetService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,6 +29,24 @@ public class TargetController {
         TargetSaveResponseDTO response = targetService.saveTarget(targetSaveRequestDTO);
         return ResponseEntity.ok(response);
     }
+
+
+    @PostMapping("/upload/{year}/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> uploadTargetsFromExcel(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable int year,
+            @PathVariable int month) {
+
+        try {
+            targetService.saveTargetsFromExcel(file, year, month);
+            return ResponseEntity.ok("Targets uploaded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload targets: " + e.getMessage());
+        }
+    }
+
 
     @PutMapping("/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")

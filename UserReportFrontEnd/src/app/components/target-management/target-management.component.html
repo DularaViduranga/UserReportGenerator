@@ -1,141 +1,37 @@
 <div class="target-management-container">
   <div class="header">
-    <h2>Target Management</h2>
+    <div class="header-content">
+      <h2>Target Management</h2>
+      <p>Set and manage sales targets for branches</p>
+    </div>
+    <div class="excel-actions-section">
+      <!-- Excel Import Component -->
+      <app-excel-import 
+        buttonText="Import Excel"
+        modalTitle="Import Excel Targets"
+        modalSubtitle="Import Targets"
+        confirmButtonText="Upload Targets"
+        fileDescription="Excel file containing target data"
+        (uploadExcel)="onUploadExcel($event)">
+      </app-excel-import>
+    </div>
   </div>
 
-  <!-- Alert Messages -->
-  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-error'">
-    {{ message }}
-  </div>
-
-  <div class="form-container">
-    <form (ngSubmit)="submitTarget()" #targetForm="ngForm">
-      
-      <!-- Admin Section: Full Region and Branch Selection -->
-      <div *ngIf="authService.isAdminUser()">
-        <!-- Region Selection -->
-        <div class="form-group">
-          <label for="region">Select Region *</label>
-          <select 
-            id="region" 
-            [(ngModel)]="selectedRegionId" 
-            name="region" 
-            (change)="onRegionChange()"
-            class="form-control"
-            required>
-            <option value="">-- Select Region --</option>
-            <option *ngFor="let region of regions" [value]="region.id">
-              {{ region.rgnName }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Branch Selection -->
-        <div class="form-group">
-          <label for="branch">Select Branch *</label>
-          <select 
-            id="branch" 
-            [(ngModel)]="selectedBranchId" 
-            name="branch"
-            (change)="onSelectionChange()"
-            class="form-control"
-            [disabled]="!selectedRegionId || branches.length === 0"
-            required>
-            <option value="">-- Select Branch --</option>
-            <option *ngFor="let branch of branches" [value]="branch.id">
-              {{ branch.brnName }} {{ branch.brnDes ? '(' + branch.brnDes + ')' : '' }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Branch User Section: Show Branch Info Only -->
-      <div *ngIf="!authService.isAdminUser()" class="branch-user-info">
-        <div class="form-group">
-          <label>Your Branch</label>
-          <div class="branch-display">
-            <span class="branch-name">{{ authService.getUserBranchName() || 'Loading...' }}</span>
-            <small class="branch-note">Targets will be created for your branch automatically</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Year and Month Selection -->
-      <div class="form-group">
-        <label for="yearMonth">Select Year and Month *</label>
-        <input 
-          type="month" 
-          id="yearMonth" 
-          [(ngModel)]="selectedYearMonth" 
-          name="yearMonth"
-          (change)="onYearMonthChange()"
-          class="form-control"
-          required>
-      </div>
-
-      <!-- Existing Target Display -->
-      <div class="target-display" *ngIf="selectedBranchId && selectedYear && selectedMonth">
-        <div class="target-info">
-          <label>Existing Target for Selected Period:</label>
-          <div class="target-amount" *ngIf="existingTarget && existingTarget.target > 0">
-            <span class="amount">Rs. {{ existingTarget.target | number:'1.2-2' }}</span>
-            <span class="status-badge" *ngIf="isUpdateMode">Updating</span>
-          </div>
-          <div class="no-target" *ngIf="!existingTarget || existingTarget.target === 0">
-            <span class="info">📝 No target set for this period</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Target Amount -->
-      <div class="form-group">
-        <label for="target">Target Amount *</label>
-        <input 
-          type="number" 
-          id="target" 
-          [(ngModel)]="targetAmount" 
-          name="target"
-          class="form-control"
-          placeholder="Enter target amount"
-          min="0"
-          step="0.1"
-          required>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="form-actions">
-        <button 
-          type="button" 
-          class="btn btn-secondary" 
-          (click)="resetForm()">
-          Reset
-        </button>
-        
-        <!-- Create Button (when not in update mode) -->
-        <button 
-          *ngIf="!isUpdateMode"
-          type="submit" 
-          class="btn btn-primary"
-          [disabled]="!canSubmit() || loading">
-          <span *ngIf="loading" class="spinner"></span>
-          {{ loading ? 'Creating...' : 'Create Target' }}
-        </button>
-        
-        <!-- Update Button (only for admins and when existing target found) -->
-        <button 
-          *ngIf="isUpdateMode && isAdmin"
-          type="submit" 
-          class="btn btn-warning"
-          [disabled]="!canSubmit() || loading">
-          <span *ngIf="loading" class="spinner"></span>
-          {{ loading ? 'Updating...' : 'Update Target' }}
-        </button>
-        
-        <!-- Message for non-admin users when target exists -->
-        <div *ngIf="isUpdateMode && !isAdmin" class="admin-only-message">
-          <p>Target already exists for this selection. Only administrators can update targets.</p>
-        </div>
-      </div>
-    </form>
-  </div>
+  <!-- Target Form Component -->
+  <app-target-form 
+    [regions]="regions"
+    [branches]="branches"
+    [isAdmin]="isAdmin"
+    [userBranchId]="userBranchId"
+    [userBranchName]="userBranchName"
+    [selectedYear]="selectedYear"
+    [selectedMonth]="selectedMonth"
+    [currentTarget]="existingTarget"
+    [loading]="loading"
+    (regionChange)="onRegionChange($event)"
+    (branchChange)="onBranchChange($event)"
+    (periodChange)="onPeriodChange($event)"
+    (submitTarget)="onSubmitTarget($event)"
+    (updateTarget)="onUpdateTarget($event)">
+  </app-target-form>
 </div>

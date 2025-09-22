@@ -22,8 +22,8 @@ public interface BranchService {
     List<BranchResponseDTO> getBranchResponsesByRegionId(Long regionId);
 
     List<BranchEntity> getBranchesByRegionId(Long regionId);
-
-    BranchEntity updateBranch(Long id, BranchSaveRequestDTO branchDto);
-
+    
     void deleteBranch(Long id);
+
+    BranchSaveResponseDTO updateBranch(Long id, BranchSaveRequestDTO branchSaveRequestDTO);
 }

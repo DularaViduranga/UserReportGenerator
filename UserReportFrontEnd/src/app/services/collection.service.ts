@@ -70,4 +70,47 @@ export class CollectionService {
   deleteCollection(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/delete/${id}`);
   }
+
+  // Excel import methods
+  uploadExcelCollections(year: number, month: number, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.http.post(
+      `${this.apiUrl}/upload/${year}/${month}`, 
+      formData, 
+      { responseType: 'text' }
+    );
+  }
+
+  getCollectionsByRegionYearMonth(regionId: number, year: number, month: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/region/${regionId}/year/${year}/month/${month}`);
+  }
+
+  getCollectionsByRegionYear(regionId: number, year: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/region/${regionId}/year/${year}`);
+  }
+
+  getBranchCollectionsByYearMonth(branchId: number, year: number, month: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/branch/${branchId}/year/${year}/month/${month}`);
+  }
+
+  getBranchCollectionsByYear(branchId: number, year: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/branch/${branchId}/year/${year}`);
+  }
+
+  updateExcelCollections(year: number, month: number, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.http.post(
+      `${this.apiUrl}/upload/update/${year}/${month}`, 
+      formData, 
+      { responseType: 'text' }
+    );
+  }
+
+  checkExistingCollections(year: number, month: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/check-existing/${year}/${month}`);
+  }
 }

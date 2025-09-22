@@ -71,4 +71,11 @@ public class BranchController {
         branchService.deleteBranch(id);
         return ResponseEntity.ok("Branch deleted successfully");
     }
+
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BranchSaveResponseDTO> updateBranch(@PathVariable Long id, @RequestBody BranchSaveRequestDTO branchSaveRequestDTO) {
+        BranchSaveResponseDTO res = branchService.updateBranch(id, branchSaveRequestDTO);
+        return ResponseEntity.ok(res);
+    }
 }

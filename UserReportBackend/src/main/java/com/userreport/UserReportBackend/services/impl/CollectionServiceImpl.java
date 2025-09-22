@@ -9,10 +9,13 @@ import com.userreport.UserReportBackend.repository.CollectionRepo;
 import com.userreport.UserReportBackend.repository.BranchRepo;
 import com.userreport.UserReportBackend.repository.UserRepo;
 import com.userreport.UserReportBackend.services.CollectionService;
+import com.userreport.UserReportBackend.services.ExcelUploadService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -26,11 +29,13 @@ public class CollectionServiceImpl implements CollectionService {
     private final CollectionRepo collectionRepo;
     private final BranchRepo branchRepo;
     private final UserRepo userRepo;
+    private final ExcelUploadService excelUploadService;
 
-    public CollectionServiceImpl(CollectionRepo collectionRepo, BranchRepo branchRepo, UserRepo userRepo) {
+    public CollectionServiceImpl(CollectionRepo collectionRepo, BranchRepo branchRepo, UserRepo userRepo, ExcelUploadService excelUploadService) {
         this.collectionRepo = collectionRepo;
         this.branchRepo = branchRepo;
         this.userRepo = userRepo;
+        this.excelUploadService = excelUploadService;
     }
 
     @Override
@@ -210,35 +215,6 @@ public class CollectionServiceImpl implements CollectionService {
                         " in " + getMonthName(month) + " " + year));
     }
 
-    @Override
-    public List<CollectionEntity> getCollectionsByBranchIdAndYear(Long branchId, Integer year) {
-        return collectionRepo.findByBranchIdAndYear(branchId, year);
-    }
-
-    @Override
-    public List<CollectionEntity> getCollectionsByRegionId(Long regionId) {
-        return collectionRepo.findByRegionId(regionId);
-    }
-
-    @Override
-    public List<CollectionEntity> getCollectionsByRegionIdAndYearMonth(Long regionId, Integer year, Integer month) {
-        return collectionRepo.findByRegionIdAndYearAndMonth(regionId, year, month);
-    }
-
-    @Override
-    public List<CollectionEntity> getCollectionsByPercentageThreshold(BigDecimal threshold) {
-        return collectionRepo.findByPercentageGreaterThanEqual(threshold);
-    }
-
-    @Override
-    public List<CollectionEntity> getCollectionsByYear(Integer year) {
-        return collectionRepo.findByCollectionYear(year);
-    }
-
-    @Override
-    public List<CollectionEntity> getCollectionsByYearAndMonth(Integer year, Integer month) {
-        return collectionRepo.findByCollectionYearAndCollectionMonth(year, month);
-    }
 
     @Override
     public BigDecimal getTotalCollectionByRegionAndYearMonth(Long regionId, Integer year, Integer month) {
@@ -273,6 +249,54 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
+    public void saveCollectionsFromExcel(MultipartFile file, int year, int month) {
+        if (!excelUploadService.isValidExcelFile(file)) {
+            throw new IllegalArgumentException("Invalid Excel file format");
+        }
+
+        try {
+            // Fix: Change targetMonth to collectionMonth
+            if(!collectionRepo.findByCollectionYearAndCollectionMonth(year, month).isEmpty()) {
+                throw new IllegalArgumentException("Collections for " + getMonthName(month) + " " + year + " already exist. Please use update instead of save.");
+            } else {
+                List<CollectionEntity> collection = excelUploadService.getCollectionsFromExcel(
+                        file.getInputStream(), year, month);
+                collectionRepo.saveAll(collection);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process Excel file", e);
+        }
+    }
+
+    @Override
+    public void updateCollectionsFromExcel(MultipartFile file, int year, int month) {
+        if (!excelUploadService.isValidExcelFile(file)) {
+            throw new IllegalArgumentException("Invalid Excel file format");
+        }
+
+        try {
+            // Check if collections exist for this year and month
+            List<CollectionEntity> existingCollections = collectionRepo.findByCollectionYearAndCollectionMonth(year, month);
+
+            if (existingCollections.isEmpty()) {
+                throw new IllegalArgumentException("No collections found for " + getMonthName(month) + " " + year + ". Please use save instead of update.");
+            }
+
+            // Get updated collections from Excel
+            List<CollectionEntity> updatedCollections = excelUploadService.updateCollectionsFromExcel(
+                    file.getInputStream(), year, month);
+
+            // Save the updated collections
+            collectionRepo.saveAll(updatedCollections);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process Excel file", e);
+        }
+    }
+
+
+
+    @Override
     public List<CollectionResponseDTO> getAllCollectionResponses() {
         List<CollectionEntity> collections = collectionRepo.findAll();
         return collections.stream()
@@ -282,25 +306,36 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public CollectionResponseDTO getCollectionResponseById(Long id) {
-        CollectionEntity entity = getCollectionById(id);
+        CollectionEntity entity = collectionRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Collection not found with id: " + id));
         return convertToResponseDTO(entity);
     }
 
     @Override
     public CollectionResponseDTO getCollectionResponseByBranchId(Long branchId) {
-        CollectionEntity entity = getCollectionByBranchId(branchId);
+        List<CollectionEntity> collections = collectionRepo.findCollectionsByBranchId(branchId);
+        if (collections.isEmpty()) {
+            throw new RuntimeException("Collection not found for branch id: " + branchId);
+        }
+
+        CollectionEntity entity = collections.stream()
+                .max((c1, c2) -> c1.getCreatedDatetime().compareTo(c2.getCreatedDatetime()))
+                .orElseThrow(() -> new RuntimeException("Collection not found for branch id: " + branchId));
         return convertToResponseDTO(entity);
     }
 
+
     @Override
     public CollectionResponseDTO getCollectionResponseByBranchIdAndYearMonth(Long branchId, Integer year, Integer month) {
-        CollectionEntity entity = getCollectionByBranchIdAndYearMonth(branchId, year, month);
+        CollectionEntity entity = collectionRepo.findByBranchIdAndYearAndMonth(branchId, year, month)
+                .orElseThrow(() -> new RuntimeException("Collection not found for branch id: " + branchId +
+                        " in " + getMonthName(month) + " " + year));
         return convertToResponseDTO(entity);
     }
 
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByBranchIdAndYear(Long branchId, Integer year) {
-        List<CollectionEntity> entities = getCollectionsByBranchIdAndYear(branchId, year);
+        List<CollectionEntity> entities = collectionRepo.findByBranchIdAndYear(branchId, year);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
@@ -308,7 +343,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByRegionId(Long regionId) {
-        List<CollectionEntity> entities = getCollectionsByRegionId(regionId);
+        List<CollectionEntity> entities = collectionRepo.findByRegionId(regionId);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
@@ -316,15 +351,27 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByRegionIdAndYearMonth(Long regionId, Integer year, Integer month) {
-        List<CollectionEntity> entities = getCollectionsByRegionIdAndYearMonth(regionId, year, month);
+        List<CollectionEntity> entities = collectionRepo.findByRegionIdAndYearAndMonth(regionId, year, month);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
+
+    @Override
+    public List<CollectionResponseDTO> getCollectionResponsesByRegionIdAndYear(Long regionId, Integer year) {
+        List<CollectionEntity> entities = collectionRepo.findByRegionId(regionId).stream()
+                                                        .filter(c -> c.getCollectionYear().equals(year))
+                                                        .collect(Collectors.toList());
+        return entities.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByPercentageThreshold(BigDecimal threshold) {
-        List<CollectionEntity> entities = getCollectionsByPercentageThreshold(threshold);
+        List<CollectionEntity> entities = collectionRepo.findByPercentageGreaterThanEqual(threshold);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
@@ -332,7 +379,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByYear(Integer year) {
-        List<CollectionEntity> entities = getCollectionsByYear(year);
+        List<CollectionEntity> entities = collectionRepo.findByCollectionYear(year);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
@@ -340,7 +387,7 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public List<CollectionResponseDTO> getCollectionResponsesByYearAndMonth(Integer year, Integer month) {
-        List<CollectionEntity> entities = getCollectionsByYearAndMonth(year, month);
+        List<CollectionEntity> entities = collectionRepo.findByCollectionYearAndCollectionMonth(year, month);
         return entities.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());

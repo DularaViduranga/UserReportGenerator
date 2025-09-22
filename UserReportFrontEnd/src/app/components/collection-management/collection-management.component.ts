@@ -7,12 +7,13 @@ import { BranchService, BranchResponse } from '../../services/branch.service';
 import { TargetService } from '../../services/target.service';
 import { CollectionService, CollectionSaveRequest } from '../../services/collection.service';
 import { AuthService } from '../../services/auth.service';
+import { ExcelImportComponent } from '../target-management/excel-import/excel-import.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-collection-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ExcelImportComponent],
   templateUrl: './collection-management.component.html',
   styleUrl: './collection-management.component.css'
 })
@@ -441,5 +442,205 @@ export class CollectionManagementComponent implements OnInit {
     setTimeout(() => {
       this.message = '';
     }, 5000);
+  }
+
+  async onUploadCollectionExcel(data: {year: number, month: number, file: File}): Promise<void> {
+    // First check if there are existing collections for this period
+    try {
+      const existingCheck = await this.collectionService.checkExistingCollections(data.year, data.month).toPromise();
+      
+      if (existingCheck && existingCheck.hasExistingCollections) {
+        // Show confirmation dialog if collections already exist
+        const confirmResult = await Swal.fire({
+          title: '<h3 style="color: #ffc107;">⚠️ Existing Collections Found</h3>',
+          html: `
+            <div style="text-align: center;">
+              <p>There are already existing collections for <strong>${this.getMonthName(data.month)} ${data.year}</strong></p>
+              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                <strong>📊 Existing Collections:</strong> ${existingCheck.count || 0} collection(s) found
+              </div>
+              <p style="color: #856404;">
+                Uploading this Excel file will <strong>overwrite</strong> the existing collections.
+              </p>
+              <p style="color: #6c757d; font-size: 0.9rem;">
+                Are you sure you want to continue?
+              </p>
+            </div>
+          `,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: '<i class="fas fa-upload"></i> Yes, Overwrite',
+          cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+          confirmButtonColor: '#ffc107',
+          cancelButtonColor: '#6c757d',
+          width: '500px'
+        });
+
+        if (!confirmResult.isConfirmed) {
+          return; // User cancelled
+        }
+      }
+    } catch (error) {
+      console.log('No existing collections check endpoint or error:', error);
+      // Continue with upload if check fails
+    }
+
+    this.uploadCollectionExcelFile(data.year, data.month, data.file);
+  }
+
+  private async uploadCollectionExcelFile(year: number, month: number, file: File): Promise<void> {
+    // Show loading
+    Swal.fire({
+      title: 'Uploading...',
+      html: `
+        <div style="text-align: center;">
+          <div style="margin-bottom: 15px;">
+            <img src="https://icons.veryicon.com/png/o/application/skills-section/microsoft-excel-10.png" 
+                 style="width: 50px; height: 50px;">
+          </div>
+          <p>Processing Excel file for ${this.getMonthName(month)} ${year}</p>
+          <p style="color: #6c757d; font-size: 0.9rem;">Please wait while we import your collections...</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const response = await this.collectionService.uploadExcelCollections(year, month, file).toPromise();
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Upload Successful!',
+        html: `
+          <div style="text-align: center;">
+            <p>Excel file has been processed successfully!</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>📅 Period:</strong> ${this.getMonthName(month)} ${year}<br>
+              <strong>📄 File:</strong> ${file.name}
+            </div>
+            <p style="color: #28a745; background: #d4edda; padding: 10px; border-radius: 5px;">
+              ${response || 'Collections uploaded successfully!'}
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#28a745',
+        timer: 4000,
+        timerProgressBar: true
+      });
+
+      // Refresh data if we're viewing the same period
+      if (this.selectedYear === year && this.selectedMonth === month && this.selectedBranchId) {
+        this.checkExistingCollection();
+      }
+
+    } catch (error: any) {
+      console.error('Error uploading Excel file:', error);
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Upload Failed',
+        html: `
+          <div style="text-align: center;">
+            <p>Failed to upload Excel file</p>
+            <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
+              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+            </div>
+            <p style="color: #6c757d; font-size: 0.9rem;">
+              Please check your file format and try again.
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  }
+
+  private getMonthName(month: number): string {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[month - 1] || '';
+  }
+
+  onUpdateCollectionExcel(data: {year: number, month: number, file: File}): void {
+    // Check for existing collections before updating
+    this.collectionService.checkExistingCollections(data.year, data.month).subscribe({
+      next: (response) => {
+        if (response.hasExistingCollections) {
+          this.showExcelUpdateConfirmation(response.count, data);
+        } else {
+          Swal.fire({
+            title: 'No Collections Found',
+            text: `No existing collections found for ${this.getMonthName(data.month)} ${data.year} to update.`,
+            icon: 'warning',
+            confirmButtonText: 'OK'
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error checking existing collections:', error);
+        this.updateCollectionExcelFile(data);
+      }
+    });
+  }
+
+  private showExcelUpdateConfirmation(count: number, data: {year: number, month: number, file: File}): void {
+    Swal.fire({
+      title: 'Update Existing Collections',
+      html: `
+        <p>Found <strong>${count}</strong> existing collections for ${this.getMonthName(data.month)} ${data.year}.</p>
+        <p style="color: #f39c12;"><strong>Note:</strong> This will update the existing collection data.</p>
+        <p>Do you want to continue?</p>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Update',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#f39c12'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.updateCollectionExcelFile(data);
+      }
+    });
+  }
+
+  private updateCollectionExcelFile(data: {year: number, month: number, file: File}): void {
+    Swal.fire({
+      title: 'Updating...',
+      html: `Updating collections from <strong>${data.file.name}</strong> for ${this.getMonthName(data.month)} ${data.year}`,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    this.collectionService.updateExcelCollections(data.year, data.month, data.file).subscribe({
+      next: (response) => {
+        Swal.fire({
+          title: 'Update Successful!',
+          text: response || 'Collections updated successfully!',
+          icon: 'success',
+          timer: 3000,
+          showConfirmButton: false
+        });
+        
+        // Refresh collections if viewing the same period
+        if (this.selectedYear === data.year && this.selectedMonth === data.month && this.selectedBranchId) {
+          this.onSelectionChange();
+        }
+      },
+      error: (error) => {
+        console.error('Error updating collections:', error);
+        Swal.fire({
+          title: 'Update Failed',
+          text: error.error || 'Failed to update collections. Please check your file format and try again.',
+          icon: 'error'
+        });
+      }
+    });
   }
 }

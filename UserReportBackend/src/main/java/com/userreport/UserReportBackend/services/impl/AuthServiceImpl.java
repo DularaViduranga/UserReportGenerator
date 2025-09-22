@@ -4,9 +4,11 @@ import com.userreport.UserReportBackend.dto.user.LoginRequestDTO;
 import com.userreport.UserReportBackend.dto.user.LoginResponseDTO;
 import com.userreport.UserReportBackend.dto.user.RegisterRequestDTO;
 import com.userreport.UserReportBackend.dto.user.RegisterResponseDTO;
+import com.userreport.UserReportBackend.entity.BranchEntity;
 import com.userreport.UserReportBackend.entity.Role;
 import com.userreport.UserReportBackend.entity.UserEntity;
 import com.userreport.UserReportBackend.exception.UserNotFoundException;
+import com.userreport.UserReportBackend.repository.BranchRepo;
 import com.userreport.UserReportBackend.repository.UserRepo;
 import com.userreport.UserReportBackend.services.AuthService;
 import com.userreport.UserReportBackend.services.JWTservice;
@@ -23,12 +25,14 @@ import java.util.Map;
 @Service
 public class AuthServiceImpl implements AuthService {
     private final UserRepo userRepo;
+    private final BranchRepo branchRepo;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JWTservice jwtservice;
 
-    public AuthServiceImpl(UserRepo userRepo, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JWTservice jwtservice) {
+    public AuthServiceImpl(UserRepo userRepo, BranchRepo branchRepo, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JWTservice jwtservice) {
         this.userRepo = userRepo;
+        this.branchRepo = branchRepo;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtservice = jwtservice;
@@ -45,13 +49,46 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserEntity createUser(RegisterRequestDTO userData) {
+        String email = userData.getEmail().toLowerCase();
+        Role role;
+        Long branchId = null;
+        
+        // Determine role and branch based on email
+        if (email.endsWith("@admin.com")) {
+            role = Role.ADMIN;
+            // Admin users don't have a specific branch
+        } else if (email.contains(".user.com")) {
+            role = Role.USER;
+            // Extract branch name from email
+            String branchName = extractBranchFromEmail(email);
+            
+            // Find the branch in the database
+            BranchEntity branch = branchRepo.findByBrnNameIgnoreCase(branchName)
+                .orElseThrow(() -> new RuntimeException("Branch '" + branchName + "' not found. Please contact administrator."));
+            
+            branchId = branch.getId();
+        } else {
+            throw new RuntimeException("Invalid email format. Admin emails must end with '@admin.com' and user emails must end with '@{branch}.user.com'");
+        }
+
         UserEntity newUser = new UserEntity(
                 userData.getName(),
                 userData.getEmail(),
                 userData.getUsername(),
-                passwordEncoder.encode(userData.getPassword())
+                passwordEncoder.encode(userData.getPassword()),
+                role,
+                branchId
         );
         return userRepo.save(newUser);
+    }
+    
+    private String extractBranchFromEmail(String email) {
+        // Extract branch name from email format: username@branchname.user.com
+        String domain = email.substring(email.indexOf("@") + 1);
+        if (domain.endsWith(".user.com")) {
+            return domain.substring(0, domain.indexOf(".user.com"));
+        }
+        throw new RuntimeException("Invalid email format for branch user");
     }
 
     @Override
@@ -109,6 +146,17 @@ public class AuthServiceImpl implements AuthService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
         claims.put("email", user.getEmail());
+        claims.put("name", user.getName());
+        
+        // Add branch information if user has a branch
+        if (user.getBranchId() != null) {
+            claims.put("branchId", user.getBranchId());
+            // Also include branch name for easier access
+            BranchEntity branch = branchRepo.findById(user.getBranchId()).orElse(null);
+            if (branch != null) {
+                claims.put("branchName", branch.getBrnName());
+            }
+        }
 
         String jwtToken = jwtservice.getJwtToken(loginRequestDTO.getUsername(), claims);
 
@@ -117,19 +165,33 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public RegisterResponseDTO register(RegisterRequestDTO registerRequestDTO) {
-        if (isUsernameTaken(registerRequestDTO.getUsername())) {
-            throw new IllegalArgumentException("User already exists");
-        }
-        var user = this.createUser(registerRequestDTO);
+        try {
+            // Check if user already exists by username or email
+            if (isUsernameTaken(registerRequestDTO.getUsername())) {
+                return new RegisterResponseDTO(null, "Username already exists");
+            }
+            
+            if (isEmailTaken(registerRequestDTO.getEmail())) {
+                return new RegisterResponseDTO(null, "Email already exists");
+            }
+            
+            var user = this.createUser(registerRequestDTO);
 
-        if (user.getId() == null) {
-            throw new RuntimeException("User creation failed");
-        }
+            if (user.getId() == null) {
+                throw new RuntimeException("User creation failed");
+            }
 
-        return new RegisterResponseDTO("User successfully created at " + LocalDateTime.now(), null);
+            return new RegisterResponseDTO("User successfully created at " + LocalDateTime.now(), null);
+        } catch (Exception e) {
+            return new RegisterResponseDTO(null, "Registration failed: " + e.getMessage());
+        }
     }
 
     private Boolean isUsernameTaken(String username) {
         return userRepo.findByUsername(username).isPresent();
+    }
+    
+    private Boolean isEmailTaken(String email) {
+        return userRepo.findByEmail(email).isPresent();
     }
 }

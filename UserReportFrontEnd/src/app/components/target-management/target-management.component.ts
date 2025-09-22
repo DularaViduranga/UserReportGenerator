@@ -6,12 +6,14 @@ import { RegionService, Region } from '../../services/region.service';
 import { BranchService, BranchResponse } from '../../services/branch.service';
 import { TargetService, TargetSaveRequest } from '../../services/target.service';
 import { AuthService } from '../../services/auth.service';
+import { TargetFormComponent } from './target-form/target-form.component';
+import { ExcelImportComponent } from './excel-import/excel-import.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-target-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TargetFormComponent, ExcelImportComponent],
   templateUrl: './target-management.component.html',
   styleUrl: './target-management.component.css'
 })
@@ -23,328 +25,304 @@ export class TargetManagementComponent implements OnInit {
   selectedBranchId: number | null = null;
   selectedYear: number = new Date().getFullYear();
   selectedMonth: number = new Date().getMonth() + 1;
-  selectedYearMonth: string = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-  targetAmount: number = 0;
-
-  // Update functionality properties
+  
+  // Current target data
   existingTarget: any = null;
-  isUpdateMode: boolean = false;
   isAdmin: boolean = false;
+  loading: boolean = false;
 
-  years: number[] = [];
-  months = [
-    { value: 1, name: 'January' },
-    { value: 2, name: 'February' },
-    { value: 3, name: 'March' },
-    { value: 4, name: 'April' },
-    { value: 5, name: 'May' },
-    { value: 6, name: 'June' },
-    { value: 7, name: 'July' },
-    { value: 8, name: 'August' },
-    { value: 9, name: 'September' },
-    { value: 10, name: 'October' },
-    { value: 11, name: 'November' },
-    { value: 12, name: 'December' }
-  ];
+  // User branch info for non-admin users
+  userBranchId: number | null = null;
+  userBranchName: string | null = null;
 
-  loading = false;
-  message = '';
-  messageType: 'success' | 'error' = 'success';
+  // Computed property for selected branch name
+  get selectedBranchName(): string {
+    if (this.userBranchName && !this.isAdmin) {
+      return this.userBranchName;
+    }
+    
+    if (this.selectedBranchId && this.branches.length > 0) {
+      const branch = this.branches.find(b => b.id === this.selectedBranchId);
+      return branch ? branch.brnName : '';
+    }
+    
+    return '';
+  }
 
   constructor(
+    private router: Router,
     private regionService: RegionService,
     private branchService: BranchService,
     private targetService: TargetService,
-    public authService: AuthService,
-    private router: Router
-  ) {
-    // Generate years (current year - 5 to current year + 5)
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-      this.years.push(i);
-    }
-  }
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
-    // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
-      console.error('User not logged in, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
 
-    console.log('User is logged in, token exists:', !!this.authService.getToken());
-    
-    // Check if user is admin
     this.isAdmin = this.authService.isAdminUser();
-    console.log('User is admin:', this.isAdmin);
     
     if (this.isAdmin) {
-      // Admin can see all regions and branches
       this.loadRegions();
     } else {
-      // Branch user - auto-select their branch
-      this.autoSelectUserBranch();
-    }
-  }
-
-  private autoSelectUserBranch(): void {
-    const userBranchId = this.authService.getUserBranchId();
-    const userBranchName = this.authService.getUserBranchName();
-    
-    if (userBranchId && userBranchName) {
-      console.log(`Auto-selecting branch for user: ${userBranchName} (ID: ${userBranchId})`);
-      
-      this.selectedBranchId = userBranchId;
-      // Trigger selection change to load targets
-      this.onSelectionChange();
-    } else {
-      this.showMessage('Unable to determine your branch. Please contact administrator.', 'error');
+      this.initializeBranchUser();
     }
   }
 
   loadRegions(): void {
-    console.log('Loading regions...');
     this.regionService.getAllRegions().subscribe({
-      next: (regions) => {
-        console.log('Regions loaded successfully:', regions);
-        this.regions = regions;
+      next: (response) => {
+        this.regions = response;
       },
       error: (error) => {
         console.error('Error loading regions:', error);
-        if (error.status === 403) {
-          console.error('Authentication failed - token expired or invalid');
-          this.showMessage('Authentication failed. Please login again.', 'error');
-          this.authService.logout();
-          this.router.navigate(['/login']);
-        } else {
-          this.showMessage('Error loading regions: ' + (error.message || 'Unknown error'), 'error');
-        }
+        this.showMessage('Error loading regions', 'error');
       }
     });
   }
 
-  onRegionChange(): void {
-    if (this.selectedRegionId) {
-      console.log('Loading branches for region ID:', this.selectedRegionId);
-      this.branches = [];
-      this.selectedBranchId = null;
-      this.branchService.getBranchesByRegion(this.selectedRegionId).subscribe({
-        next: (branches) => {
-          console.log('Branches loaded successfully:', branches);
-          this.branches = branches;
-        },
-        error: (error) => {
-          console.error('Error loading branches:', error);
-          console.error('Error status:', error.status);
-          console.error('Error message:', error.message);
-          this.showMessage('Error loading branches', 'error');
-        }
-      });
+  initializeBranchUser(): void {
+    this.userBranchId = this.authService.getUserBranchId();
+    this.userBranchName = this.authService.getUserBranchName();
+    
+    if (this.userBranchId) {
+      this.selectedBranchId = this.userBranchId;
+      this.loadTargetForBranch();
     }
   }
 
-  onSelectionChange(): void {
-    // Check for existing target when branch/month/year selection changes
-    if (this.selectedBranchId && this.selectedYear && this.selectedMonth) {
-      this.checkExistingTarget();
-    }
-  }
-
-  onYearMonthChange(): void {
-    // Parse the year-month string to update individual year and month values
-    if (this.selectedYearMonth) {
-      const [year, month] = this.selectedYearMonth.split('-');
-      this.selectedYear = parseInt(year);
-      this.selectedMonth = parseInt(month);
-      
-      // Check for existing target
-      if (this.selectedBranchId) {
-        this.checkExistingTarget();
-      }
-    }
-  }
-
-  checkExistingTarget(): void {
+  loadTargetForBranch(): void {
     if (!this.selectedBranchId || !this.selectedYear || !this.selectedMonth) {
       return;
     }
 
+    this.loading = true;
     this.targetService.getTargetsByBranchAndYearMonth(
-      this.selectedBranchId, this.selectedYear, this.selectedMonth
+      this.selectedBranchId, 
+      this.selectedYear, 
+      this.selectedMonth
     ).subscribe({
       next: (target) => {
-        console.log('Existing target found:', target);
         this.existingTarget = target;
-        this.isUpdateMode = true;
-        // Keep input field empty for update mode
-        this.targetAmount = 0;
-        // Clear any error messages
-        this.message = '';
+        this.loading = false;
       },
       error: (error) => {
-        console.log('No existing target found or error:', error);
+        console.error('Error loading target:', error);
         this.existingTarget = null;
-        this.isUpdateMode = false;
-        this.targetAmount = 0;
-        this.message = '';
+        this.loading = false;
       }
     });
   }
 
-  canSubmit(): boolean {
-    return this.selectedRegionId !== null && 
-           this.selectedBranchId !== null && 
-           this.targetAmount > 0 && 
-           this.selectedYear > 0 && 
-           this.selectedMonth > 0;
-  }
-
-  submitTarget(): void {
-    if (!this.canSubmit()) {
-      this.showMessage('Please fill all required fields', 'error');
-      return;
-    }
-
-    // If in update mode and user is not admin, prevent update
-    if (this.isUpdateMode && !this.isAdmin) {
-      this.showMessage('Only administrators can update targets', 'error');
-      return;
-    }
-
-    // If in update mode, show confirmation dialog
-    if (this.isUpdateMode) {
-      this.showUpdateConfirmation();
-      return;
-    }
-
-    // Regular create operation
-    this.performCreateTarget();
-  }
-
-  showUpdateConfirmation(): void {
-    const monthName = this.months.find(m => m.value === this.selectedMonth)?.name;
-    const branchName = this.branches.find(b => b.id === this.selectedBranchId)?.brnName;
+  // Event handlers for child components
+  onRegionChange(regionId: number): void {
+    this.selectedRegionId = regionId;
+    this.branches = [];
+    this.existingTarget = null;
     
-    Swal.fire({
-      title: 'Update Target',
-      html: `
-        <div style="text-align: left; margin: 20px 0;">
-          <p><strong>Branch:</strong> ${branchName}</p>
-          <p><strong>Period:</strong> ${monthName} ${this.selectedYear}</p>
-          <p><strong>Current Target:</strong> Rs. ${this.existingTarget?.target?.toLocaleString() || 0}</p>
-          <p><strong>New Target:</strong> Rs. ${this.targetAmount.toLocaleString()}</p>
-        </div>
-        <p>Are you sure you want to update this target?</p>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#ffc107',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Yes, Update',
-      cancelButtonText: 'Cancel',
-      background: '#fff',
-      customClass: {
-        popup: 'swal-popup',
-        title: 'swal-title',
-        htmlContainer: 'swal-html'
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.performUpdateTarget();
+    this.branchService.getBranchesByRegion(regionId).subscribe({
+      next: (response) => {
+        this.branches = response;
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+        this.showMessage('Error loading branches', 'error');
       }
     });
   }
 
-  performCreateTarget(): void {
-    this.loading = true;
-    
+  onBranchChange(data: {branchId: number, regionId: number}): void {
+    this.selectedBranchId = data.branchId;
+    this.loadTargetForBranch();
+  }
+
+  onPeriodChange(data: {year: number, month: number}): void {
+    this.selectedYear = data.year;
+    this.selectedMonth = data.month;
+    if (this.selectedBranchId) {
+      this.loadTargetForBranch();
+    }
+  }
+
+  onSubmitTarget(data: {branchId: number, year: number, month: number, amount: number}): void {
     const targetRequest: TargetSaveRequest = {
-      target: this.targetAmount,
-      targetYear: this.selectedYear,
-      targetMonth: this.selectedMonth,
-      branchId: this.selectedBranchId!
+      target: data.amount,
+      targetYear: data.year,
+      targetMonth: data.month,
+      branchId: data.branchId
     };
 
     this.targetService.createTarget(targetRequest).subscribe({
       next: (response) => {
         this.showMessage('Target set successfully!', 'success');
-        this.resetForm();
-        this.loading = false;
+        this.loadTargetForBranch(); // Refresh the target display
       },
       error: (error) => {
-        console.error('Error creating target:', error);
-        this.showMessage('Error setting target. Please try again.', 'error');
-        this.loading = false;
+        console.error('Error setting target:', error);
+        this.showMessage('Failed to set target. Please try again.', 'error');
       }
     });
   }
 
-  performUpdateTarget(): void {
+  async onUpdateTarget(data: {id: number, amount: number}): Promise<void> {
     if (!this.existingTarget) {
-      this.showMessage('No existing target to update', 'error');
+      this.showMessage('No target found to update', 'error');
       return;
     }
 
-    this.loading = true;
-    
     const updateRequest = {
-      target: this.targetAmount,
+      target: data.amount,
       targetYear: this.selectedYear,
       targetMonth: this.selectedMonth,
-      branchId: this.selectedBranchId!
+      branchId: this.selectedBranchId
     };
 
-    this.targetService.updateTarget(this.existingTarget.id, updateRequest).subscribe({
+    this.targetService.updateTarget(data.id, updateRequest).subscribe({
       next: (response) => {
         this.showMessage('Target updated successfully!', 'success');
-        this.resetForm();
-        this.loading = false;
+        this.loadTargetForBranch(); // Refresh the target display
       },
       error: (error) => {
         console.error('Error updating target:', error);
-        this.showMessage('Error updating target. Please try again.', 'error');
-        this.loading = false;
+        this.showMessage('Failed to update target. Please try again.', 'error');
       }
     });
   }
 
-  resetForm(): void {
-    this.selectedRegionId = null;
-    this.selectedBranchId = null;
-    this.branches = [];
-    this.targetAmount = 0;
-    this.selectedYear = new Date().getFullYear();
-    this.selectedMonth = new Date().getMonth() + 1;
-    this.existingTarget = null;
-    this.isUpdateMode = false;
-    this.message = '';
+  async onUploadExcel(data: {year: number, month: number, file: File}): Promise<void> {
+    // First check if there are existing targets for this period
+    try {
+      const existingCheck = await this.targetService.checkExistingTargets(data.year, data.month).toPromise();
+      
+      if (existingCheck && existingCheck.hasExistingTargets) {
+        // Show confirmation dialog if targets already exist
+        const confirmResult = await Swal.fire({
+          title: '<h3 style="color: #ffc107;">⚠️ Existing Targets Found</h3>',
+          html: `
+            <div style="text-align: center;">
+              <p>There are already existing targets for <strong>${this.getMonthName(data.month)} ${data.year}</strong></p>
+              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                <strong>📊 Existing Targets:</strong> ${existingCheck.count || 0} target(s) found
+              </div>
+              <p style="color: #856404;">
+                Uploading this Excel file will <strong>overwrite</strong> the existing targets.
+              </p>
+              <p style="color: #6c757d; font-size: 0.9rem;">
+                Are you sure you want to continue?
+              </p>
+            </div>
+          `,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: '<i class="fas fa-upload"></i> Yes, Overwrite',
+          cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+          confirmButtonColor: '#ffc107',
+          cancelButtonColor: '#6c757d',
+          width: '500px'
+        });
+
+        if (!confirmResult.isConfirmed) {
+          return; // User cancelled
+        }
+      }
+    } catch (error) {
+      console.log('No existing targets check endpoint or error:', error);
+      // Continue with upload if check fails
+    }
+
+    this.uploadExcelFile(data.year, data.month, data.file);
   }
 
-  showMessage(text: string, type: 'success' | 'error'): void {
-    // Still set the message for any components that might need it
-    this.message = text;
-    this.messageType = type;
+  private async uploadExcelFile(year: number, month: number, file: File): Promise<void> {
+    // Show loading
+    Swal.fire({
+      title: 'Uploading...',
+      html: `
+        <div style="text-align: center;">
+          <div style="margin-bottom: 15px;">
+            <img src="https://icons.veryicon.com/png/o/application/skills-section/microsoft-excel-10.png" 
+                 style="width: 50px; height: 50px;">
+          </div>
+          <p>Processing Excel file for ${this.getMonthName(month)} ${year}</p>
+          <p style="color: #6c757d; font-size: 0.9rem;">Please wait while we import your targets...</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
-    // Show SweetAlert2 notification
+    try {
+      const response = await this.targetService.uploadExcelTargets(year, month, file).toPromise();
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Upload Successful!',
+        html: `
+          <div style="text-align: center;">
+            <p>Excel file has been processed successfully!</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>📅 Period:</strong> ${this.getMonthName(month)} ${year}<br>
+              <strong>📄 File:</strong> ${file.name}
+            </div>
+            <p style="color: #28a745; background: #d4edda; padding: 10px; border-radius: 5px;">
+              ${response || 'Targets uploaded successfully!'}
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#28a745',
+        timer: 4000,
+        timerProgressBar: true
+      });
+
+      // Refresh data if we're viewing the same period
+      if (this.selectedYear === year && this.selectedMonth === month && this.selectedBranchId) {
+        this.loadTargetForBranch();
+      }
+
+    } catch (error: any) {
+      console.error('Error uploading Excel file:', error);
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Upload Failed',
+        html: `
+          <div style="text-align: center;">
+            <p>Failed to upload Excel file</p>
+            <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
+              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+            </div>
+            <p style="color: #6c757d; font-size: 0.9rem;">
+              Please check your file format and try again.
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  }
+
+  private getMonthName(month: number): string {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1] || '';
+  }
+
+  private showMessage(message: string, type: 'success' | 'error'): void {
     Swal.fire({
       title: type === 'success' ? 'Success!' : 'Error!',
-      text: text,
-      icon: type === 'success' ? 'success' : 'error',
+      text: message,
+      icon: type,
       confirmButtonColor: type === 'success' ? '#28a745' : '#dc3545',
-      confirmButtonText: 'OK',
-      timer: type === 'success' ? 3000 : undefined,
-      timerProgressBar: type === 'success' ? true : false,
-      background: '#fff',
-      customClass: {
-        popup: 'swal-popup',
-        title: 'swal-title'
-      }
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false
     });
-
-    // Clear message after delay
-    setTimeout(() => {
-      this.message = '';
-    }, 5000);
   }
 }

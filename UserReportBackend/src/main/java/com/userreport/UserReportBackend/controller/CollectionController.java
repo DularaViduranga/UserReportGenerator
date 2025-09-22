@@ -3,9 +3,11 @@ package com.userreport.UserReportBackend.controller;
 import com.userreport.UserReportBackend.dto.collection.*;
 import com.userreport.UserReportBackend.entity.CollectionEntity;
 import com.userreport.UserReportBackend.services.CollectionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +28,37 @@ public class CollectionController {
     public ResponseEntity<CollectionSaveResponseDTO> createCollection(@RequestBody CollectionSaveRequestDTO collectionSaveRequestDTO) {
         CollectionSaveResponseDTO response = collectionService.saveCollection(collectionSaveRequestDTO);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/upload/{year}/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> uploadCollectionsFromExcel(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable int year,
+            @PathVariable int month) {
+
+        try {
+            collectionService.saveCollectionsFromExcel(file, year, month);
+            return ResponseEntity.ok("Collections uploaded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload collections: " + e.getMessage());
+        }
+    }
+    @PostMapping("/upload/update/{year}/{month}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> updateCollectionsFromExcel(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable int year,
+            @PathVariable int month) {
+
+        try {
+            collectionService.updateCollectionsFromExcel(file, year, month);
+            return ResponseEntity.ok("Collections updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update collections: " + e.getMessage());
+        }
     }
 
     @PutMapping("/update/{id}")
@@ -110,6 +143,14 @@ public class CollectionController {
         return ResponseEntity.ok(collections);
     }
 
+    @GetMapping("/region/{regionId}/year/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByRegionIdAndYear(@PathVariable Long regionId,
+                                                                                            @PathVariable Integer year) {
+        List<CollectionResponseDTO> collections = collectionService.getCollectionResponsesByRegionIdAndYear(regionId, year);
+        return ResponseEntity.ok(collections);
+    }
+
     @GetMapping("/getCollectionsByPercentageThreshold/{threshold}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CollectionResponseDTO>> getCollectionsByPercentageThreshold(@PathVariable BigDecimal threshold) {
@@ -140,6 +181,8 @@ public class CollectionController {
         BigDecimal totalCollection = collectionService.getTotalCollectionByRegionAndYearMonth(regionId, year, month);
         return ResponseEntity.ok(totalCollection);
     }
+
+
 
     @GetMapping("/summary/monthly/year/{year}/month/{month}")
     @PreAuthorize("isAuthenticated()")

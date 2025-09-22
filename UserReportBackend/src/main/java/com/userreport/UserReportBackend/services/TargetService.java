@@ -2,12 +2,15 @@ package com.userreport.UserReportBackend.services;
 
 import com.userreport.UserReportBackend.dto.target.*;
 import com.userreport.UserReportBackend.entity.TargetEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface TargetService {
     TargetSaveResponseDTO saveTarget(TargetSaveRequestDTO targetSaveRequestDTO);
+
+
 
     TargetSaveResponseDTO updateTarget(Long id, TargetUpdateRequestDTO targetUpdateRequestDTO);
 
@@ -64,4 +67,6 @@ public interface TargetService {
     YearlyTargetSummaryDTO getYearlyTargetSummary(Integer year);
 
     YearlyTargetSummaryDTO getYearlyTargetSummaryByRegion(Long regionId, Integer year);
+
+    void saveTargetsFromExcel(MultipartFile file, int year, int month);
 }

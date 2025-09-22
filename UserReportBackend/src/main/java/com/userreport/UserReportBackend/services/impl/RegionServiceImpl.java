@@ -63,9 +63,9 @@ public class RegionServiceImpl implements RegionService {
         if (!regionRepo.existsById(id)) {
             return new RegionSaveResponseDTO(null, "Region not found");
         }
-        if (regionRepo.existsByRgnName(regionSaveRequestDTO.getRgnName().toUpperCase())) {
-            return new RegionSaveResponseDTO(null, "Region already exists");
-        }
+//        if (regionRepo.existsByRgnName(regionSaveRequestDTO.getRgnName().toUpperCase())) {
+//            return new RegionSaveResponseDTO(null, "Region already exists");
+//        }
         try {
             RegionEntity regionEntity = regionRepo.findById(id).get();
             regionEntity.setRgnName(regionSaveRequestDTO.getRgnName().toUpperCase());

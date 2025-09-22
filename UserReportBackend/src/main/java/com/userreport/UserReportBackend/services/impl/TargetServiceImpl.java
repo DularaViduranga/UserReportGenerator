@@ -7,11 +7,14 @@ import com.userreport.UserReportBackend.entity.UserEntity;
 import com.userreport.UserReportBackend.repository.TargetRepo;
 import com.userreport.UserReportBackend.repository.BranchRepo;
 import com.userreport.UserReportBackend.repository.UserRepo;
+import com.userreport.UserReportBackend.services.ExcelUploadService;
 import com.userreport.UserReportBackend.services.TargetService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,11 +27,14 @@ public class TargetServiceImpl implements TargetService {
     private final TargetRepo targetRepo;
     private final BranchRepo branchRepo;
     private final UserRepo userRepo;
+    private final ExcelUploadService excelUploadService;
 
-    public TargetServiceImpl(TargetRepo targetRepo, BranchRepo branchRepo, UserRepo userRepo) {
+
+    public TargetServiceImpl(TargetRepo targetRepo, BranchRepo branchRepo, UserRepo userRepo, ExcelUploadService excelUploadService) {
         this.targetRepo = targetRepo;
         this.branchRepo = branchRepo;
         this.userRepo = userRepo;
+        this.excelUploadService = excelUploadService;
     }
 
     @Override
@@ -80,6 +86,9 @@ public class TargetServiceImpl implements TargetService {
             return new TargetSaveResponseDTO(null, "Error saving target: " + e.getMessage());
         }
     }
+
+
+
 
     @Override
     public TargetSaveResponseDTO updateTarget(Long id, TargetUpdateRequestDTO targetUpdateRequestDTO) {
@@ -234,6 +243,27 @@ public class TargetServiceImpl implements TargetService {
                 .collect(Collectors.toList());
         return createYearlyTargetSummary(year, targets);
     }
+
+    @Override
+    public void saveTargetsFromExcel(MultipartFile file, int year, int month) {
+        if (!excelUploadService.isValidExcelFile(file)) {
+            throw new IllegalArgumentException("Invalid Excel file format");
+        }
+
+        try {
+            if(targetRepo.findByTargetYearAndTargetMonth(year, month).size() > 0) {
+                throw new IllegalArgumentException("Targets for " + getMonthName(month) + " " + year + " already exist. Please delete existing targets before uploading new ones.");
+            }else {
+                List<TargetEntity> targets = excelUploadService.getTargetsFromExcel(
+                        file.getInputStream(), year, month);
+                targetRepo.saveAll(targets);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process Excel file", e);
+        }
+    }
+
+
 
     @Override
     public List<TargetResponseDTO> getAllTargetResponses() {

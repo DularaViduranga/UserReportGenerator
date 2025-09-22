@@ -1,6 +1,28 @@
 <div class="collection-management-container">
   <div class="header">
-    <h2>Collection Management</h2>
+    <div class="header-content">
+      <h2>Collection Management</h2>
+      <p>Track and manage collections for branches</p>
+    </div>
+    <div class="excel-actions-section" *ngIf="isAdmin">
+      <app-excel-import 
+        buttonText="Import Collections"
+        modalTitle="Import Collections from Excel"
+        modalSubtitle="Import Collections"
+        confirmButtonText="Upload Collections"
+        fileDescription="Excel file containing collection data"
+        (uploadExcel)="onUploadCollectionExcel($event)">
+      </app-excel-import>
+      
+      <app-excel-import 
+        buttonText="Update Collections"
+        modalTitle="Update Collections from Excel"
+        modalSubtitle="Update Collections"
+        confirmButtonText="Update Collections"
+        fileDescription="Excel file containing updated collection data"
+        (uploadExcel)="onUpdateCollectionExcel($event)">
+      </app-excel-import>
+    </div>
   </div>
 
   <!-- Alert Messages -->

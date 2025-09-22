@@ -86,4 +86,16 @@ export class TargetService {
   deleteTarget(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/delete/${id}`);
   }
+
+  uploadExcelTargets(year: number, month: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/upload/${year}/${month}`, formData, { 
+      responseType: 'text' 
+    });
+  }
+
+  checkExistingTargets(year: number, month: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/check-existing/${year}/${month}`);
+  }
 }

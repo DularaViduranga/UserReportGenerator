@@ -8,18 +8,102 @@
 }
 
 .header {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 30px;
+  gap: 20px;
 }
 
-.header h2 {
+.header-content {
+  flex-grow: 1;
+}
+
+.header-content h2 {
   color: #333;
-  margin-bottom: 10px;
+  margin: 0 0 5px 0;
+  font-size: 1.8em;
+  font-weight: 600;
 }
 
-.header p {
+.header-content p {
   color: #666;
   font-size: 14px;
+  margin: 0;
+}
+
+.excel-actions-section {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .excel-actions-section {
+    align-self: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+.excel-import-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.excel-import-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1db584 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.excel-import-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+.excel-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .excel-import-section {
+    align-self: flex-end;
+  }
+  
+  .excel-import-btn {
+    font-size: 0.85em;
+    padding: 8px 12px;
+  }
+  
+  .excel-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .alert {

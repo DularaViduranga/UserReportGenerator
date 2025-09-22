@@ -2,12 +2,14 @@ package com.userreport.UserReportBackend.repository;
 
 import com.userreport.UserReportBackend.entity.CollectionEntity;
 import com.userreport.UserReportBackend.entity.BranchEntity;
+import com.userreport.UserReportBackend.entity.TargetEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Optional;
 import java.util.List;
 
@@ -61,6 +63,7 @@ public interface CollectionRepo extends JpaRepository<CollectionEntity, Long> {
     // Find collections by year and month
     List<CollectionEntity> findByCollectionYearAndCollectionMonth(Integer year, Integer month);
 
+
     // Get total collection amount by region for specific month/year
     @Query("SELECT SUM(c.collectionAmount) FROM CollectionEntity c WHERE c.branch.region.id = :regionId AND c.collectionYear = :year AND c.collectionMonth = :month")
     BigDecimal getTotalCollectionByRegionAndYearMonth(@Param("regionId") Long regionId,
@@ -74,4 +77,6 @@ public interface CollectionRepo extends JpaRepository<CollectionEntity, Long> {
     // Sum collection amount by branch and year (needed for Dashboard)
     @Query("SELECT SUM(c.collectionAmount) FROM CollectionEntity c WHERE c.branch.id = :branchId AND c.collectionYear = :year")
     BigDecimal sumCollectionByBranchAndYear(@Param("branchId") Long branchId, @Param("year") int year);
+
+    Optional<CollectionEntity> findByBranchAndCollectionYearAndCollectionMonth(BranchEntity branch, int year, int month);
 }

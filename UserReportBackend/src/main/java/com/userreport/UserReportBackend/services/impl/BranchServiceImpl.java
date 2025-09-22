@@ -113,31 +113,7 @@ public class BranchServiceImpl implements BranchService {
         return branchRepo.findByRegionId(regionId);
     }
 
-    @Override
-    public BranchEntity updateBranch(Long id, BranchSaveRequestDTO branchDto) {
-        BranchEntity existingBranch = branchRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Branch not found with id: " + id));
 
-        if (branchDto.getBrnName() != null && !branchDto.getBrnName().isEmpty()) {
-            existingBranch.setBrnName(branchDto.getBrnName().toUpperCase());
-        }
-        if (branchDto.getBrnDes() != null && !branchDto.getBrnDes().isEmpty()) {
-            existingBranch.setBrnDes(branchDto.getBrnDes());
-        }
-        if (branchDto.getRegion() != null) {
-            String regionName = branchDto.getRegion().toUpperCase();
-            if (!regionRepo.existsByRgnName(regionName)) {
-                throw new RuntimeException("Region with name " + regionName + " does not exist");
-            }
-            existingBranch.setRegion(regionRepo.findByRgnName(regionName));
-        }
-
-        try {
-            return branchRepo.save(existingBranch);
-        } catch (Exception e) {
-            throw new RuntimeException("Error updating branch: " + e.getMessage());
-        }
-    }
 
     @Override
     public void deleteBranch(Long id) {
@@ -148,6 +124,37 @@ public class BranchServiceImpl implements BranchService {
             branchRepo.deleteById(id);
         } catch (Exception e) {
             throw new RuntimeException("Error deleting branch: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public BranchSaveResponseDTO updateBranch(Long id, BranchSaveRequestDTO branchSaveRequestDTO) {
+        BranchEntity existingBranch = branchRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Branch not found with id: " + id));
+
+        if (branchSaveRequestDTO.getBrnName() == null || branchSaveRequestDTO.getBrnName().isEmpty()) {
+            return new BranchSaveResponseDTO(null, "Branch name cannot be empty");
+        }
+        if (branchSaveRequestDTO.getBrnDes() == null || branchSaveRequestDTO.getBrnDes().isEmpty()) {
+            return new BranchSaveResponseDTO(null, "Branch description cannot be empty");
+        }
+        if (branchSaveRequestDTO.getRegion() == null) {
+            return new BranchSaveResponseDTO(null, "Region cannot be null");
+        }
+        String regionName = branchSaveRequestDTO.getRegion().toUpperCase();
+        if (!regionRepo.existsByRgnName(regionName)) {
+            return new BranchSaveResponseDTO(null, "Region with name " + regionName + " does not exist");
+        }
+
+        existingBranch.setBrnName(branchSaveRequestDTO.getBrnName().toUpperCase());
+        existingBranch.setBrnDes(branchSaveRequestDTO.getBrnDes());
+        existingBranch.setRegion(regionRepo.findByRgnName(regionName));
+
+        try {
+            branchRepo.save(existingBranch);
+            return new BranchSaveResponseDTO("Branch updated successfully", null);
+        } catch (Exception e) {
+            return new BranchSaveResponseDTO(null, "Error updating branch: " + e.getMessage());
         }
     }
 

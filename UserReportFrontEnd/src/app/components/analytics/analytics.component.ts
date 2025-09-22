@@ -1,28 +1,31 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChartComponent, ChartDataset } from '../shared/chart/chart.component';
 import { RegionService, Region } from '../../services/region.service';
 import { BranchService, BranchResponse } from '../../services/branch.service';
 import { TargetService } from '../../services/target.service';
 import { CollectionService } from '../../services/collection.service';
 
-interface ChartData {
-  regionName: string;
-  targetAmount: number;
+interface CollectionResponseDTO {
+  id: number;
+  target: number;
+  due: number;
   collectionAmount: number;
-  achievementPercentage: number;
-  branches: BranchData[];
-}
-
-interface BranchData {
+  percentage: number;
+  collectionYear: number;
+  collectionMonth: number;
   branchName: string;
-  targetAmount: number;
-  collectionAmount: number;
-  achievementPercentage: number;
+  regionName: string;
+  createdDatetime: string;
+  modifyDatetime: string;
+  createdByUsername: string;
+  modifyByUsername: string;
 }
 
 interface MonthlyData {
   month: string;
+  monthNumber: number;
   target: number;
   collection: number;
   achievement: number;
@@ -31,7 +34,7 @@ interface MonthlyData {
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ChartComponent],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css'
 })
@@ -40,14 +43,20 @@ export class AnalyticsComponent implements OnInit {
   branches: BranchResponse[] = [];
   
   selectedRegionId: number | null = null;
+  selectedBranchId: number | null = null;
   selectedYear: number = new Date().getFullYear();
-  selectedMonth: number | null = null;
+  selectedMonth: number | string | null = null;
   
-  chartData: ChartData[] = [];
   monthlyData: MonthlyData[] = [];
   loading = false;
+  dataLoaded = false;
   
-  viewMode: 'regional' | 'monthly' = 'regional';
+  viewMode: 'regional' | 'branch' = 'regional';
+  
+  // Chart properties
+  chartLabels: string[] = [];
+  chartDatasets: ChartDataset[] = [];
+  showChart: boolean = false;
   
   years: number[] = [];
   months = [
@@ -76,16 +85,14 @@ export class AnalyticsComponent implements OnInit {
     private targetService: TargetService,
     private collectionService: CollectionService
   ) {
-    // Generate years (current year - 5 to current year)
     const currentYear = new Date().getFullYear();
-    for (let i = currentYear - 5; i <= currentYear; i++) {
+    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
       this.years.push(i);
     }
   }
 
   ngOnInit(): void {
     this.loadRegions();
-    this.loadAnalyticsData();
   }
 
   loadRegions(): void {
@@ -99,103 +106,281 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  onFiltersChange(): void {
+  loadBranches(): void {
+    if (this.selectedRegionId) {
+      this.branchService.getBranchesByRegion(this.selectedRegionId).subscribe({
+        next: (branches) => {
+          this.branches = branches;
+          this.selectedBranchId = null;
+        },
+        error: (error) => {
+          console.error('Error loading branches:', error);
+        }
+      });
+    }
+  }
+
+  onViewModeChange(): void {
+    this.selectedRegionId = null;
+    this.selectedBranchId = null;
+    this.branches = [];
+    this.resetAnalyticsData();
+  }
+
+  onRegionChange(): void {
+    if (this.viewMode === 'branch') {
+      this.loadBranches();
+    }
     this.loadAnalyticsData();
   }
 
+  onFiltersChange(): void {
+    // Always reset chart and data state when filters change
+    this.clearChartData();
+    this.resetAnalyticsData();
+    this.loadAnalyticsData();
+  }
+
+  loadRegionalAnalysis(): void {
+    this.loadAnalysisData('regional');
+  }
+
+  loadBranchAnalysis(): void {
+    this.loadAnalysisData('branch');
+  }
+
+  loadAnalysisData(type: 'regional' | 'branch'): void {
+    // Check if we have a valid month (not null, not 'null' string, and not empty)
+    const hasValidMonth = this.selectedMonth && 
+                         this.selectedMonth !== 'null' && 
+                         this.selectedMonth !== null && 
+                         this.selectedMonth !== '';
+    
+    if (hasValidMonth) {
+      // Load data for specific month
+      this.loadMonthlyData(type);
+    } else {
+      // Load data for entire year (All Months)
+      this.loadYearlyData(type);
+    }
+  }
+
   loadAnalyticsData(): void {
+    if (this.viewMode === 'regional' && !this.selectedRegionId) {
+      this.resetAnalyticsData();
+      return;
+    }
+    
+    if (this.viewMode === 'branch' && (!this.selectedRegionId || !this.selectedBranchId)) {
+      this.resetAnalyticsData();
+      return;
+    }
+
     this.loading = true;
+    this.dataLoaded = false;
     
     if (this.viewMode === 'regional') {
-      this.loadRegionalData();
+      this.loadRegionalAnalysis();
     } else {
-      this.loadMonthlyData();
+      this.loadBranchAnalysis();
     }
   }
 
-  loadRegionalData(): void {
-    // Load targets and collections data for regional view
-    Promise.all([
-      this.loadTargetsData(),
-      this.loadCollectionsData()
-    ]).then(() => {
-      this.processRegionalData();
-      this.loading = false;
-    }).catch((error) => {
-      console.error('Error loading analytics data:', error);
-      this.loading = false;
+  loadMonthlyData(type: 'regional' | 'branch'): void {
+    const monthValue = typeof this.selectedMonth === 'string' ? 
+                      parseInt(this.selectedMonth) : 
+                      this.selectedMonth!;
+    
+    const observable = type === 'regional' 
+      ? this.collectionService.getCollectionsByRegionYearMonth(this.selectedRegionId!, this.selectedYear, monthValue)
+      : this.collectionService.getBranchCollectionsByYearMonth(this.selectedBranchId!, this.selectedYear, monthValue);
+      
+    observable.subscribe({
+      next: (response: any) => {
+        console.log('Monthly data response:', response); // Debug log
+        this.processMonthlyData(response);
+      },
+      error: (error) => {
+        console.error(`Error loading ${type} monthly data:`, error);
+        this.loading = false;
+        this.resetAnalyticsData();
+      }
     });
   }
 
-  loadMonthlyData(): void {
-    // Generate monthly data for the selected year
-    const monthlyPromises = [];
+  loadYearlyData(type: 'regional' | 'branch'): void {
+    const observable = type === 'regional'
+      ? this.collectionService.getCollectionsByRegionYear(this.selectedRegionId!, this.selectedYear)
+      : this.collectionService.getBranchCollectionsByYear(this.selectedBranchId!, this.selectedYear);
+      
+    observable.subscribe({
+      next: (response: any) => {
+        console.log('Yearly data response:', response); // Debug log
+        this.processYearlyData(response);
+      },
+      error: (error) => {
+        console.error(`Error loading ${type} yearly data:`, error);
+        this.loading = false;
+        this.resetAnalyticsData();
+      }
+    });
+  }
+
+  processMonthlyData(collections: CollectionResponseDTO[] | CollectionResponseDTO | any): void {
+    // Ensure collections is an array
+    let collectionsArray: CollectionResponseDTO[] = [];
     
+    if (Array.isArray(collections)) {
+      collectionsArray = collections;
+    } else if (collections && typeof collections === 'object') {
+      // If it's a single object, wrap it in an array
+      collectionsArray = [collections];
+    } else {
+      console.error('Invalid collections data:', collections);
+      this.resetAnalyticsData();
+      return;
+    }
+    
+    // Calculate totals for the specific month
+    this.totalTarget = collectionsArray.reduce((sum, item) => sum + (item.target || 0), 0);
+    this.totalCollection = collectionsArray.reduce((sum, item) => sum + (item.collectionAmount || 0), 0);
+    this.overallAchievement = this.totalTarget > 0 ? Math.round((this.totalCollection / this.totalTarget) * 100) : 0;
+    
+    // For specific month: ensure NO chart is displayed
+    this.clearChartData();
+    this.dataLoaded = true;
+    this.loading = false;
+  }
+
+  processYearlyData(collections: CollectionResponseDTO[] | CollectionResponseDTO | any): void {
+    // Ensure collections is an array
+    let collectionsArray: CollectionResponseDTO[] = [];
+    
+    if (Array.isArray(collections)) {
+      collectionsArray = collections;
+    } else if (collections && typeof collections === 'object') {
+      // If it's a single object, wrap it in an array
+      collectionsArray = [collections];
+    } else {
+      console.error('Invalid collections data:', collections);
+      this.resetAnalyticsData();
+      return;
+    }
+    
+    // Calculate yearly totals
+    this.totalTarget = collectionsArray.reduce((sum, item) => sum + (item.target || 0), 0);
+    this.totalCollection = collectionsArray.reduce((sum, item) => sum + (item.collectionAmount || 0), 0);
+    this.overallAchievement = this.totalTarget > 0 ? Math.round((this.totalCollection / this.totalTarget) * 100) : 0;
+    
+    // Generate monthly chart data for yearly view
+    this.generateMonthlyChartData(collectionsArray);
+    this.dataLoaded = true;
+    this.loading = false;
+  }
+
+  private clearChartData(): void {
+    this.monthlyData = [];
+    this.chartLabels = [];
+    this.chartDatasets = [];
+    this.showChart = false;
+    
+    // Force change detection for chart visibility
+    setTimeout(() => {
+      this.showChart = false;
+    }, 0);
+  }
+
+  generateMonthlyChartData(collections: CollectionResponseDTO[]): void {
+    // Double-check: Only proceed if this is for All Months (yearly data)
+    const isSpecificMonth = this.selectedMonth && 
+                          this.selectedMonth !== 'null' && 
+                          this.selectedMonth !== null && 
+                          this.selectedMonth !== '';
+                          
+    if (isSpecificMonth) {
+      this.clearChartData();
+      return;
+    }
+    
+    const monthlyMap = new Map<number, {target: number, collection: number}>();
+    
+    // Initialize all months with zero values
     for (let month = 1; month <= 12; month++) {
-      monthlyPromises.push(this.getMonthlyDataForMonth(month));
+      monthlyMap.set(month, {target: 0, collection: 0});
     }
     
-    Promise.all(monthlyPromises).then((results) => {
-      this.monthlyData = results.filter(data => data !== null) as MonthlyData[];
-      this.loading = false;
-    }).catch((error) => {
-      console.error('Error loading monthly data:', error);
-      this.loading = false;
+    // Aggregate data by month
+    collections.forEach(item => {
+      const monthData = monthlyMap.get(item.collectionMonth) || {target: 0, collection: 0};
+      monthData.target += item.target || 0;
+      monthData.collection += item.collectionAmount || 0;
+      monthlyMap.set(item.collectionMonth, monthData);
     });
-  }
-
-  async getMonthlyDataForMonth(month: number): Promise<MonthlyData | null> {
-    try {
-      const monthName = this.months.find(m => m.value === month)?.name || '';
-      
-      // Get targets and collections for this month
-      const [targets, collections] = await Promise.all([
-        this.targetService.getTargetsByYearAndMonth(this.selectedYear, month).toPromise(),
-        this.collectionService.getCollectionsByYearAndMonth(this.selectedYear, month).toPromise()
-      ]);
-      
-      const totalTarget = targets?.reduce((sum, t) => sum + (t.target || 0), 0) || 0;
-      const totalCollection = collections?.reduce((sum, c) => sum + (c.collection || 0), 0) || 0;
-      const achievement = totalTarget > 0 ? (totalCollection / totalTarget) * 100 : 0;
-      
-      return {
-        month: monthName,
-        target: totalTarget,
-        collection: totalCollection,
-        achievement: Math.round(achievement)
-      };
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async loadTargetsData(): Promise<any> {
-    if (this.selectedMonth) {
-      return this.targetService.getTargetsByYearAndMonth(this.selectedYear, this.selectedMonth).toPromise();
-    } else {
-      return this.targetService.getTargetsByYear(this.selectedYear).toPromise();
-    }
-  }
-
-  async loadCollectionsData(): Promise<any> {
-    if (this.selectedMonth) {
-      return this.collectionService.getCollectionsByYearAndMonth(this.selectedYear, this.selectedMonth).toPromise();
-    } else {
-      return this.collectionService.getCollectionsByYear(this.selectedYear).toPromise();
-    }
-  }
-
-  processRegionalData(): void {
-    // Process and group data by regions
-    // This is a simplified version - you would need to implement the actual data processing
-    // based on your specific requirements and data structure
     
-    this.chartData = [];
+    // Generate monthly data array
+    this.monthlyData = [];
+    for (let month = 1; month <= 12; month++) {
+      const data = monthlyMap.get(month)!;
+      const achievement = data.target > 0 ? Math.round((data.collection / data.target) * 100) : 0;
+      
+      this.monthlyData.push({
+        month: this.months.find(m => m.value === month)?.name || '',
+        monthNumber: month,
+        target: data.target,
+        collection: data.collection,
+        achievement: achievement
+      });
+    }
+
+    // Update chart data - will only show chart for All Months
+    this.updateChartData();
+  }
+
+  private updateChartData(): void {
+    // Check if this is for a specific month (never show chart for specific month)
+    const isSpecificMonth = this.selectedMonth && 
+                          this.selectedMonth !== null && 
+                          this.selectedMonth !== 'null' && 
+                          this.selectedMonth !== '';
+    
+    if (isSpecificMonth || this.monthlyData.length === 0) {
+      this.showChart = false;
+      this.chartLabels = [];
+      this.chartDatasets = [];
+      return;
+    }
+    
+    // Only update chart data for yearly view (All Months)
+    this.chartLabels = this.monthlyData.map(data => data.month);
+    
+    this.chartDatasets = [
+      {
+        label: 'Targets',
+        data: this.monthlyData.map(data => data.target),
+        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        tension: 0.4
+      },
+      {
+        label: 'Collections',
+        data: this.monthlyData.map(data => data.collection),
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        tension: 0.4
+      }
+    ];
+    
+    // Only show chart for All Months view
+    this.showChart = true;
+  }
+
+  resetAnalyticsData(): void {
     this.totalTarget = 0;
     this.totalCollection = 0;
-    
-    // Calculate totals and overall achievement
-    this.overallAchievement = this.totalTarget > 0 ? Math.round((this.totalCollection / this.totalTarget) * 100) : 0;
+    this.overallAchievement = 0;
+    this.clearChartData();
+    this.loading = false;
+    this.dataLoaded = false;
   }
 
   getAchievementStatus(percentage: number): string {
@@ -203,13 +388,5 @@ export class AnalyticsComponent implements OnInit {
     if (percentage >= 80) return 'good';
     if (percentage >= 60) return 'moderate';
     return 'poor';
-  }
-
-  getBarWidth(value: number, maxValue: number): number {
-    return maxValue > 0 ? (value / maxValue) * 100 : 0;
-  }
-
-  getMaxValue(data: any[], field: string): number {
-    return Math.max(...data.map(item => item[field] || 0));
   }
 }

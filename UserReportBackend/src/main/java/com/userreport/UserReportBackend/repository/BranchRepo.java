@@ -13,6 +13,9 @@ import java.util.Optional;
 @Repository
 public interface BranchRepo extends JpaRepository<BranchEntity,Long> {
     boolean existsByBrnName(String upperCase);
+    
+    @Query("SELECT b FROM BranchEntity b WHERE LOWER(b.brnName) = LOWER(:branchName)")
+    Optional<BranchEntity> findByBrnNameIgnoreCase(@Param("branchName") String branchName);
 
     // Change this method in BranchRepo.java
     @Query("SELECT t FROM TargetEntity t WHERE t.branch.id = :branchId AND t.targetYear = :year AND t.targetMonth = :month")
@@ -24,4 +27,5 @@ public interface BranchRepo extends JpaRepository<BranchEntity,Long> {
     List<BranchEntity> findByRegionId(@Param("regionId") Long regionId);
 
 
+    BranchEntity findByBrnName(String stringCellValue);
 }
