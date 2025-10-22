@@ -4,15 +4,25 @@
       <h2>Target Management</h2>
       <p>Set and manage sales targets for branches</p>
     </div>
-    <div class="excel-actions-section">
-      <!-- Excel Import Component -->
+    <div class="excel-actions-section" *ngIf="isAdmin">
+      <!-- Import Targets Component -->
       <app-excel-import 
-        buttonText="Import Excel"
-        modalTitle="Import Excel Targets"
+        buttonText="Import Targets"
+        modalTitle="Import Targets from Excel"
         modalSubtitle="Import Targets"
         confirmButtonText="Upload Targets"
         fileDescription="Excel file containing target data"
         (uploadExcel)="onUploadExcel($event)">
+      </app-excel-import>
+      
+      <!-- Update Targets Component -->
+      <app-excel-import 
+        buttonText="Update Targets"
+        modalTitle="Update Targets from Excel"
+        modalSubtitle="Update Targets"
+        confirmButtonText="Update Targets"
+        fileDescription="Excel file containing updated target data"
+        (uploadExcel)="onUpdateTargetExcel($event)">
       </app-excel-import>
     </div>
   </div>

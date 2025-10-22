@@ -1,0 +1,162 @@
+<div class="form-container" [class.loading]="loading" [class.disabled]="disabled">
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="loading-spinner">
+      <i class="icon spinner loading"></i>
+      <span>Processing...</span>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="dynamic-form" [class]="config.layout || 'vertical'">
+    
+    <!-- Form Fields -->
+    <div class="form-fields" [class]="'columns-' + (config.columns || 1)">
+      
+      <div *ngFor="let field of config.fields" 
+           [class]="getFieldClass(field)"
+           [hidden]="!shouldShowField(field)">
+        
+        <!-- Field Label -->
+        <label 
+          *ngIf="field.type !== 'checkbox'" 
+          [for]="field.name" 
+          class="field-label"
+          [class.required]="field.required">
+          {{ field.label }}
+          <span *ngIf="field.required" class="required-asterisk">*</span>
+        </label>
+
+        <!-- Text Input -->
+        <input 
+          *ngIf="field.type === 'text' || field.type === 'email' || field.type === 'password'"
+          [type]="field.type"
+          [id]="field.name"
+          [formControlName]="field.name"
+          [placeholder]="field.placeholder || ''"
+          [readonly]="field.readonly || false"
+          [disabled]="field.disabled || false"
+          class="form-control">
+
+        <!-- Number Input -->
+        <input 
+          *ngIf="field.type === 'number'"
+          type="number"
+          [id]="field.name"
+          [formControlName]="field.name"
+          [placeholder]="field.placeholder || ''"
+          [readonly]="field.readonly || false"
+          [disabled]="field.disabled || false"
+          class="form-control">
+
+        <!-- Date Input -->
+        <input 
+          *ngIf="field.type === 'date'"
+          type="date"
+          [id]="field.name"
+          [formControlName]="field.name"
+          [readonly]="field.readonly || false"
+          [disabled]="field.disabled || false"
+          class="form-control">
+
+        <!-- Select Dropdown -->
+        <select 
+          *ngIf="field.type === 'select'"
+          [id]="field.name"
+          [formControlName]="field.name"
+          [disabled]="field.disabled || false"
+          class="form-control">
+          
+          <option value="">-- Select {{ field.label }} --</option>
+          <option 
+            *ngFor="let option of field.options" 
+            [value]="option.value"
+            [disabled]="option.disabled || false">
+            {{ option.label }}
+          </option>
+        </select>
+
+        <!-- Textarea -->
+        <textarea 
+          *ngIf="field.type === 'textarea'"
+          [id]="field.name"
+          [formControlName]="field.name"
+          [placeholder]="field.placeholder || ''"
+          [readonly]="field.readonly || false"
+          [disabled]="field.disabled || false"
+          [rows]="field.rows || 3"
+          class="form-control">
+        </textarea>
+
+        <!-- Checkbox -->
+        <div *ngIf="field.type === 'checkbox'" class="checkbox-wrapper">
+          <input 
+            type="checkbox"
+            [id]="field.name"
+            [formControlName]="field.name"
+            [disabled]="field.disabled || false"
+            class="form-checkbox">
+          <label [for]="field.name" class="checkbox-label">
+            {{ field.label }}
+            <span *ngIf="field.required" class="required-asterisk">*</span>
+          </label>
+        </div>
+
+        <!-- Radio Group -->
+        <div *ngIf="field.type === 'radio'" class="radio-group">
+          <div *ngFor="let option of field.options" class="radio-option">
+            <input 
+              type="radio"
+              [id]="field.name + '_' + option.value"
+              [name]="field.name"
+              [value]="option.value"
+              [formControlName]="field.name"
+              [disabled]="(field.disabled || false) || (option.disabled || false)"
+              class="form-radio">
+            <label [for]="field.name + '_' + option.value" class="radio-label">
+              {{ option.label }}
+            </label>
+          </div>
+        </div>
+
+        <!-- Field Error Message -->
+        <div *ngIf="isFieldInvalid(field.name)" class="field-error">
+          {{ getFieldError(field.name) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions" *ngIf="config.showSubmit !== false || config.showCancel || config.showReset">
+      
+      <!-- Submit Button -->
+      <button 
+        *ngIf="config.showSubmit !== false"
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="!isFormValid || loading">
+        <i *ngIf="loading" class="icon spinner loading"></i>
+        {{ config.submitLabel || 'Submit' }}
+      </button>
+
+      <!-- Cancel Button -->
+      <button 
+        *ngIf="config.showCancel"
+        type="button" 
+        class="btn btn-secondary"
+        [disabled]="loading">
+        {{ config.cancelLabel || 'Cancel' }}
+      </button>
+
+      <!-- Reset Button -->
+      <button 
+        *ngIf="config.showReset"
+        type="button" 
+        class="btn btn-outline-secondary"
+        [disabled]="loading"
+        (click)="onReset()">
+        {{ config.resetLabel || 'Reset' }}
+      </button>
+    </div>
+  </form>
+</div>

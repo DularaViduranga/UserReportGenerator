@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 export interface Branch {
   id: number;
@@ -26,7 +27,7 @@ export interface BranchResponse {
   providedIn: 'root'
 })
 export class BranchService {
-  private apiUrl = 'http://localhost:8080/api/v1/branches';
+  private apiUrl = environment.apiUrl+'/api/v1/branches';
 
   constructor(private http: HttpClient) { }
 

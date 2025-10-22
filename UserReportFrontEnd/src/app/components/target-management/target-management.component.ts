@@ -306,6 +306,141 @@ export class TargetManagementComponent implements OnInit {
     }
   }
 
+  async onUpdateTargetExcel(data: {year: number, month: number, file: File}): Promise<void> {
+    // First check if there are existing targets for this period
+    try {
+      const existingCheck = await this.targetService.checkExistingTargets(data.year, data.month).toPromise();
+      
+      if (existingCheck && existingCheck.hasExistingTargets) {
+        // Show confirmation dialog for update
+        this.showExcelUpdateConfirmation(existingCheck.count, data);
+      } else {
+        // No existing targets found, show warning
+        await Swal.fire({
+          icon: 'warning',
+          title: 'No Existing Targets Found',
+          html: `
+            <div style="text-align: center;">
+              <p>No existing targets found for <strong>${this.getMonthName(data.month)} ${data.year}</strong></p>
+              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                <strong>💡 Suggestion:</strong> Use "Import Targets" instead for creating new targets.
+              </div>
+              <p style="color: #6c757d; font-size: 0.9rem;">
+                Update function is only for modifying existing target data.
+              </p>
+            </div>
+          `,
+          confirmButtonColor: '#ffc107'
+        });
+      }
+    } catch (error) {
+      console.log('No existing targets check endpoint or error:', error);
+      // Continue with update if check fails
+      this.updateTargetExcelFile(data);
+    }
+  }
+
+  private showExcelUpdateConfirmation(count: number, data: {year: number, month: number, file: File}): void {
+    Swal.fire({
+      title: '<h3 style="color: #17a2b8;">🔄 Update Existing Targets</h3>',
+      html: `
+        <div style="text-align: center;">
+          <p>Ready to update existing targets for <strong>${this.getMonthName(data.month)} ${data.year}</strong></p>
+          <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #17a2b8;">
+            <strong>📊 Existing Targets:</strong> ${count} target(s) will be updated
+          </div>
+          <p style="color: #0c5460;">
+            This will update the existing target values with data from your Excel file.
+          </p>
+          <p style="color: #6c757d; font-size: 0.9rem;">
+            Continue with the update?
+          </p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '<i class="fas fa-sync"></i> Yes, Update Targets',
+      cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+      confirmButtonColor: '#17a2b8',
+      cancelButtonColor: '#6c757d',
+      width: '500px'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.updateTargetExcelFile(data);
+      }
+    });
+  }
+
+  private async updateTargetExcelFile(data: {year: number, month: number, file: File}): Promise<void> {
+    // Show loading
+    Swal.fire({
+      title: 'Updating...',
+      html: `
+        <div style="text-align: center;">
+          <div style="margin-bottom: 15px;">
+            <img src="https://icons.veryicon.com/png/o/application/skills-section/microsoft-excel-10.png" 
+                 style="width: 50px; height: 50px;">
+          </div>
+          <p>Updating targets from Excel file for ${this.getMonthName(data.month)} ${data.year}</p>
+          <p style="color: #6c757d; font-size: 0.9rem;">Please wait while we update your targets...</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const response = await this.targetService.updateExcelTargets(data.year, data.month, data.file).toPromise();
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Update Successful!',
+        html: `
+          <div style="text-align: center;">
+            <p>Excel file has been processed and targets updated successfully!</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>📅 Period:</strong> ${this.getMonthName(data.month)} ${data.year}<br>
+              <strong>📄 File:</strong> ${data.file.name}
+            </div>
+            <p style="color: #28a745; background: #d4edda; padding: 10px; border-radius: 5px;">
+              ${response || 'Targets updated successfully!'}
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#28a745',
+        timer: 4000,
+        timerProgressBar: true
+      });
+
+      // Refresh data if we're viewing the same period
+      if (this.selectedYear === data.year && this.selectedMonth === data.month && this.selectedBranchId) {
+        this.loadTargetForBranch();
+      }
+
+    } catch (error: any) {
+      console.error('Error updating Excel file:', error);
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Update Failed',
+        html: `
+          <div style="text-align: center;">
+            <p>Failed to update targets from Excel file</p>
+            <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
+              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+            </div>
+            <p style="color: #6c757d; font-size: 0.9rem;">
+              Please check your file format and try again.
+            </p>
+          </div>
+        `,
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  }
+
   private getMonthName(month: number): string {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',

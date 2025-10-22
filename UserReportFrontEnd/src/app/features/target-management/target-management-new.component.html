@@ -1,0 +1,106 @@
+<app-management-container
+  [config]="pageConfig"
+  [data]="targets"
+  [gridConfig]="gridConfig"
+  [loading]="loadingState"
+  [showCreateButton]="isAdmin || userBranchId"
+  (createEntity)="onCreateTarget()"
+  (editEntity)="onEditTarget($event)"
+  (deleteEntity)="onDeleteTarget($event)"
+  (viewEntity)="onViewTarget($event)"
+  (searchChange)="onSearchChange($event)"
+  (filterChange)="onFilterChange($event)"
+  (sortChange)="onSortChange($event)"
+  (pageChange)="onPageChange($event)"
+  (bulkAction)="onBulkAction($event)">
+  
+  <!-- Custom Filters Template -->
+  <ng-template #customFilters>
+    <div class="custom-filters-container">
+      <!-- Region Filter (Admin only) -->
+      <div *ngIf="isAdmin" class="filter-group">
+        <label for="regionSelect" class="filter-label">Region:</label>
+        <select 
+          id="regionSelect"
+          [(ngModel)]="selectedRegionId"
+          (change)="onRegionChange()"
+          class="filter-select">
+          <option [value]="null">All Regions</option>
+          <option 
+            *ngFor="let region of regions" 
+            [value]="region.id">
+            {{ region.regName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Branch Filter -->
+      <div class="filter-group">
+        <label for="branchSelect" class="filter-label">Branch:</label>
+        <select 
+          id="branchSelect"
+          [(ngModel)]="selectedBranchId"
+          [disabled]="!isAdmin && userBranchId"
+          (change)="onBranchChange()"
+          class="filter-select">
+          <option [value]="null">All Branches</option>
+          <option 
+            *ngFor="let branch of branches" 
+            [value]="branch.id">
+            {{ branch.brnName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Year Filter -->
+      <div class="filter-group">
+        <label for="yearSelect" class="filter-label">Year:</label>
+        <select 
+          id="yearSelect"
+          [(ngModel)]="selectedYear"
+          (change)="onYearChange()"
+          class="filter-select">
+          <option 
+            *ngFor="let year of yearOptions" 
+            [value]="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Month Filter -->
+      <div class="filter-group">
+        <label for="monthSelect" class="filter-label">Month:</label>
+        <select 
+          id="monthSelect"
+          [(ngModel)]="selectedMonth"
+          (change)="onMonthChange()"
+          class="filter-select">
+          <option 
+            *ngFor="let month of monthOptions" 
+            [value]="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button 
+          class="btn btn-outline-primary btn-sm"
+          (click)="applyFilters()">
+          <i class="icon filter"></i>
+          Apply Filters
+        </button>
+        
+        <button 
+          class="btn btn-outline-secondary btn-sm"
+          (click)="clearFilters()">
+          <i class="icon refresh"></i>
+          Clear
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+</app-management-container>

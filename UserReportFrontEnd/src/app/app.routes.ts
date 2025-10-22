@@ -34,7 +34,11 @@ export const routes: Routes = [
   { 
     path: 'admin/branches/:regionId', 
     loadComponent: () => import('./components/branch-management/branch-management.component').then(m => m.BranchManagementComponent), 
-    canActivate: [AuthGuard] 
+    canActivate: [AuthGuard],
+    data: { 
+      prerender: false,
+      renderMode: 'csr'
+    }
   },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }

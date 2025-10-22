@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 export interface LoginRequest {
   username: string;
@@ -38,7 +39,7 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
-  private API_URL = 'http://localhost:8080/api/v1/auth';
+  private API_URL = environment.apiUrl+'/api/v1/auth';
 
   constructor(private http: HttpClient) {}
 
@@ -60,6 +61,11 @@ export class AuthService {
   createAdmin(data: RegisterRequest): Observable<RegisterResponse> {
     const headers = this.getAuthHeaders();
     return this.http.post<RegisterResponse>(`${this.API_URL}/admin/create-admin`, data, { headers });
+  }
+
+  createBranchUser(data: any): Observable<RegisterResponse> {
+    const headers = this.getAuthHeaders();
+    return this.http.post<RegisterResponse>(`${this.API_URL}/admin/create-branch-user`, data, { headers });
   }
 
   deleteUser(userId: number): Observable<any> {

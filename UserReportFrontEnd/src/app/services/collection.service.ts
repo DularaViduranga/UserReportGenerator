@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 export interface Collection {
   id: number;
@@ -35,7 +36,7 @@ export interface YearlyCollectionSummary {
   providedIn: 'root'
 })
 export class CollectionService {
-  private apiUrl = 'http://localhost:8080/api/v1/collections';
+  private apiUrl = environment.apiUrl+'/api/v1/collections';
 
   constructor(private http: HttpClient) { }
 

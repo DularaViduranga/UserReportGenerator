@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 export interface Target {
   id: number;
@@ -35,7 +36,7 @@ export interface YearlyTargetSummary {
   providedIn: 'root'
 })
 export class TargetService {
-  private apiUrl = 'http://localhost:8080/api/v1/targets';
+  private apiUrl = environment.apiUrl+'/api/v1/targets';
 
   constructor(private http: HttpClient) { }
 
@@ -91,6 +92,14 @@ export class TargetService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post(`${this.apiUrl}/upload/${year}/${month}`, formData, { 
+      responseType: 'text' 
+    });
+  }
+
+  updateExcelTargets(year: number, month: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/upload/update/${year}/${month}`, formData, { 
       responseType: 'text' 
     });
   }

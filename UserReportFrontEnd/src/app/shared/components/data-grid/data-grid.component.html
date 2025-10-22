@@ -1,0 +1,158 @@
+<div class="data-grid">
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="loading-content">
+      <i class="icon spinner loading"></i>
+      <span>Loading...</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <!-- Selection Header -->
+          <th *ngIf="selectable" class="select-column">
+            <input 
+              type="checkbox" 
+              [checked]="allSelected"
+              (change)="onSelectAll()"
+              class="checkbox">
+          </th>
+          
+          <!-- Column Headers -->
+          <th 
+            *ngFor="let column of config.columns" 
+            [class.sortable]="column.sortable"
+            [style.width]="column.width"
+            (click)="onSort(column)">
+            <div class="header-content">
+              <span>{{ column.header }}</span>
+              <i 
+                *ngIf="column.sortable" 
+                [class]="'icon ' + getSortIcon(column)"
+                class="sort-icon"></i>
+            </div>
+          </th>
+          
+          <!-- Actions Header -->
+          <th *ngIf="config.actions && config.actions.length > 0" class="actions-column">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr *ngFor="let item of currentPageData; let i = index" 
+            [class.selected]="isSelected(item)"
+            class="data-row">
+          
+          <!-- Selection Cell -->
+          <td *ngIf="selectable" class="select-cell">
+            <input 
+              type="checkbox" 
+              [checked]="isSelected(item)"
+              (change)="onSelectItem(item)"
+              class="checkbox">
+          </td>
+          
+          <!-- Data Cells -->
+          <td *ngFor="let column of config.columns" 
+              [class]="'cell-' + column.type"
+              [attr.data-label]="column.header">
+            <ng-container [ngSwitch]="column.template">
+              <!-- Badge Template -->
+              <span *ngSwitchCase="'badge'" 
+                    [class]="'badge badge-' + (getCellValue(item, column) | lowercase)">
+                {{ getCellValue(item, column) }}
+              </span>
+              
+              <!-- Status Template -->
+              <span *ngSwitchCase="'status'" 
+                    [class]="'status status-' + (getCellValue(item, column) | lowercase)">
+                <i class="icon circle"></i>
+                {{ getCellValue(item, column) }}
+              </span>
+              
+              <!-- Default Text -->
+              <span *ngSwitchDefault>
+                {{ getCellValue(item, column) }}
+              </span>
+            </ng-container>
+          </td>
+          
+          <!-- Actions Cell -->
+          <td *ngIf="config.actions && config.actions.length > 0" class="actions-cell">
+            <div class="action-buttons">
+              <button 
+                *ngFor="let action of config.actions"
+                [class]="getActionButtonClass(action)"
+                [title]="action.label"
+                (click)="onAction(action, item)">
+                <i [class]="'icon ' + getActionIcon(action)"></i>
+                <span class="action-label">{{ action.label }}</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        
+        <!-- Empty Row -->
+        <tr *ngIf="currentPageData.length === 0 && !loading" class="empty-row">
+          <td [attr.colspan]="config.columns.length + (selectable ? 1 : 0) + (config.actions?.length ? 1 : 0)">
+            <div class="empty-message">
+              <i class="icon inbox"></i>
+              <span>No data available</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Pagination -->
+  <div *ngIf="data.length > 0" class="pagination-container">
+    <div class="pagination-info">
+      <span>Showing {{ startItem }} to {{ endItem }} of {{ gridState.totalItems }} entries</span>
+      
+      <select 
+        [(ngModel)]="gridState.pageSize"
+        (change)="onPageSizeChange(gridState.pageSize)"
+        class="page-size-select">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="25">25 per page</option>
+        <option value="50">50 per page</option>
+        <option value="100">100 per page</option>
+      </select>
+    </div>
+    
+    <div class="pagination-controls">
+      <button 
+        class="btn btn-sm btn-secondary"
+        [disabled]="gridState.currentPage <= 1"
+        (click)="onPageChange(gridState.currentPage - 1)">
+        <i class="icon chevron-left"></i>
+        Previous
+      </button>
+      
+      <!-- Page Numbers -->
+      <div class="page-numbers">
+        <button 
+          *ngFor="let page of [].constructor(totalPages); let i = index"
+          [class]="'btn btn-sm ' + (gridState.currentPage === i + 1 ? 'btn-primary' : 'btn-secondary')"
+          (click)="onPageChange(i + 1)">
+          {{ i + 1 }}
+        </button>
+      </div>
+      
+      <button 
+        class="btn btn-sm btn-secondary"
+        [disabled]="gridState.currentPage >= totalPages"
+        (click)="onPageChange(gridState.currentPage + 1)">
+        Next
+        <i class="icon chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

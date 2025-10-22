@@ -1,0 +1,70 @@
+.excel-import-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(40, 167, 69, 0.3);
+  border: 2px solid transparent;
+}
+
+.excel-import-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1db584 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.excel-import-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+}
+
+.excel-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.btn-text {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .excel-import-btn {
+    font-size: 0.9em;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+  
+  .excel-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .btn-text {
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 480px) {
+  .excel-import-btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+  
+  .excel-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -1,0 +1,138 @@
+<div class="management-container">
+  <!-- Page Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="page-title">
+          <i *ngIf="config.icon" [class]="'icon ' + config.icon"></i>
+          {{ config.title }}
+        </h1>
+        <p *ngIf="config.subtitle" class="page-subtitle">{{ config.subtitle }}</p>
+      </div>
+
+      <!-- Page Actions -->
+      <div class="header-actions">
+        <ng-container *ngIf="customActions; else defaultActions">
+          <ng-container *ngTemplateOutlet="customActions"></ng-container>
+        </ng-container>
+        
+        <ng-template #defaultActions>
+          <button 
+            *ngIf="showCreateButton"
+            class="btn btn-primary"
+            (click)="onCreateClick()">
+            <i class="icon plus"></i>
+            Create {{ config.entityName }}
+          </button>
+          
+          <button 
+            *ngFor="let action of config.actions"
+            [class]="'btn btn-' + action.color"
+            [disabled]="action.disabled || action.loading"
+            (click)="action.action()">
+            <i *ngIf="action.icon && !action.loading" [class]="'icon ' + action.icon"></i>
+            <i *ngIf="action.loading" class="icon spinner loading"></i>
+            {{ action.label }}
+          </button>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <nav *ngIf="config.breadcrumbs && config.breadcrumbs.length" class="breadcrumbs">
+      <a 
+        *ngFor="let item of config.breadcrumbs; let last = last"
+        [routerLink]="item.url"
+        [class.active]="last">
+        <i *ngIf="item.icon" [class]="'icon ' + item.icon"></i>
+        {{ item.label }}
+        <i *ngIf="!last" class="icon chevron-right separator"></i>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Filters and Search Section -->
+  <div *ngIf="showSearch || showFilters || customFilters" class="filters-section">
+    <div class="filters-content">
+      <!-- Search -->
+      <div *ngIf="showSearch" class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm"
+          (input)="onSearchInput()"
+          placeholder="Search {{ config.entityNamePlural.toLowerCase() }}..."
+          class="search-input">
+        <i class="icon search search-icon"></i>
+      </div>
+
+      <!-- Custom Filters -->
+      <div *ngIf="customFilters" class="custom-filters">
+        <ng-container *ngTemplateOutlet="customFilters"></ng-container>
+      </div>
+
+      <!-- Bulk Actions -->
+      <div *ngIf="selectedItems.length > 0" class="bulk-actions">
+        <span class="selection-info">{{ selectedItems.length }} item(s) selected</span>
+        <button 
+          class="btn btn-secondary btn-sm"
+          (click)="onBulkActionExecute('delete')">
+          <i class="icon trash"></i>
+          Delete Selected
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="content-section">
+    <!-- Loading State -->
+    <div *ngIf="loading.isLoading" class="loading-container">
+      <div class="loading-spinner">
+        <i class="icon spinner loading"></i>
+        <p>{{ loading.message || 'Loading ' + config.entityNamePlural.toLowerCase() + '...' }}</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading.isLoading && data.length === 0" class="empty-state">
+      <div class="empty-content">
+        <i [class]="'icon ' + (emptyState?.icon || 'inbox')"></i>
+        <h3>{{ emptyState?.title || 'No ' + config.entityNamePlural + ' Found' }}</h3>
+        <p>{{ emptyState?.message || 'Get started by creating your first ' + config.entityName.toLowerCase() + '.' }}</p>
+        <button 
+          *ngIf="emptyState?.actionLabel && emptyState?.actionHandler"
+          class="btn btn-primary"
+          (click)="emptyState.actionHandler()">
+          {{ emptyState.actionLabel }}
+        </button>
+        <button 
+          *ngIf="!emptyState?.actionLabel && showCreateButton"
+          class="btn btn-primary"
+          (click)="onCreateClick()">
+          Create {{ config.entityName }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Grid -->
+    <div *ngIf="!loading.isLoading && data.length > 0" class="data-grid-container">
+      <!-- Custom columns template or default grid -->
+      <ng-container *ngIf="customColumns; else defaultGrid">
+        <ng-container *ngTemplateOutlet="customColumns; context: { $implicit: data }"></ng-container>
+      </ng-container>
+      
+      <ng-template #defaultGrid>
+        <app-data-grid
+          [data]="data"
+          [config]="gridConfig"
+          [loading]="loading.isLoading"
+          [selectable]="true"
+          (actionClick)="onGridAction($event.action, $event.item)"
+          (sortChange)="onSortChange($event.column, $event.direction)"
+          (selectionChange)="onSelectionChange($event)"
+          (pageChange)="onPageChange($event.page, $event.pageSize)">
+        </app-data-grid>
+      </ng-template>
+    </div>
+  </div>
+</div>

@@ -256,7 +256,11 @@ export class CollectionManagementComponent implements OnInit {
   }
 
   canSubmit(): boolean {
-    return this.selectedRegionId !== null && 
+    // For admin users, region selection is required
+    // For regular users, only branch selection is required (auto-selected)
+    const regionRequirement = this.isAdmin ? (this.selectedRegionId !== null) : true;
+    
+    return regionRequirement && 
            this.selectedBranchId !== null && 
            this.collectionAmount > 0 && 
            this.selectedYear > 0 && 
@@ -351,7 +355,8 @@ export class CollectionManagementComponent implements OnInit {
           this.showMessage(response.error, 'error');
         } else {
           this.showMessage('Collection recorded successfully!', 'success');
-          this.resetForm();
+          // Refresh the collection data to show updated values in real-time
+          this.refreshCollectionDataAfterCreate();
         }
         this.loading = false;
       },
@@ -392,7 +397,8 @@ export class CollectionManagementComponent implements OnInit {
           this.showMessage(response.error, 'error');
         } else {
           this.showMessage('Collection updated successfully!', 'success');
-          this.resetForm();
+          // Refresh the collection data to show updated values in real-time
+          this.refreshCollectionData();
         }
         this.loading = false;
       },
@@ -415,6 +421,50 @@ export class CollectionManagementComponent implements OnInit {
     this.existingCollection = null;
     this.isUpdateMode = false;
     this.message = '';
+  }
+
+  refreshCollectionData(): void {
+    // Keep the form values intact and refresh the data displays
+    // This is similar to what Target Management does after update
+    
+    if (this.selectedBranchId && this.selectedYear && this.selectedMonth) {
+      // Refresh target amount for the selected period
+      this.loadTarget();
+      
+      // Refresh existing collection data
+      this.checkExistingCollection();
+      
+      // Reset only the collection amount input to 0 for next entry
+      this.collectionAmount = 0;
+    }
+  }
+
+  refreshCollectionDataAfterCreate(): void {
+    // Refresh data after successful creation without showing error messages
+    if (this.selectedBranchId && this.selectedYear && this.selectedMonth) {
+      // Refresh target amount for the selected period
+      this.loadTarget();
+      
+      // Silently check for existing collection without showing error messages
+      this.collectionService.getCollectionByBranchAndYearMonth(
+        this.selectedBranchId, this.selectedYear, this.selectedMonth
+      ).subscribe({
+        next: (collection) => {
+          console.log('Collection refreshed after create:', collection);
+          this.existingCollection = collection;
+          this.isUpdateMode = true;
+          // Don't show any error messages - just silently update the state
+        },
+        error: (error) => {
+          console.log('No existing collection found after create:', error);
+          this.existingCollection = null;
+          this.isUpdateMode = false;
+        }
+      });
+      
+      // Reset only the collection amount input to 0 for next entry
+      this.collectionAmount = 0;
+    }
   }
 
   showMessage(text: string, type: 'success' | 'error'): void {

@@ -1,39 +1,96 @@
-<div class="dashboard-container">
-  <h2>Dashboard</h2>
-  <p class="welcome-message">Welcome, {{ auth.getUsername() }}!</p>
-  
-  <!-- Quick Actions Grid -->
-  <div class="quick-actions">
-    <h3>Quick Actions</h3>
-    <div class="actions-grid">
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <img src="assets/logo.png" alt="Co-op Life" style="height: 3rem; width: 3rem; object-fit: contain;">
+      <div>
+        <h1 class="coop-page-title">Dashboard</h1>
+        <p class="coop-page-subtitle">Welcome back, {{ auth.getUsername() }}!</p>
+      </div>
+    </div>
+    <div class="text-right">
+      <p style="font-size: 1.125rem; font-weight: 600; color: var(--coop-blue-600); margin: 0;">{{ currentDate | date:'fullDate' }}</p>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="coop-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--coop-gray-900); margin: 0;">Quick Actions</h3>
+      <button (click)="logout()" class="coop-btn coop-btn-danger" style="font-size: 0.875rem;">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+      </button>
+    </div>
+    
+    <!-- Main Management Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="margin-bottom: 2rem;">
+      <!-- Target Management Action -->
       <div class="action-card">
-        <div class="action-icon target-icon">🎯</div>
+        <div class="action-icon" style="background-color: var(--coop-blue-100);">
+          <i class="fas fa-bullseye" style="color: var(--coop-blue-600);"></i>
+        </div>
         <h4>Target Management</h4>
-        <a routerLink="/targets" class="action-btn">Manage Targets</a>
+        <p>Set and manage sales targets for branches</p>
+        <a routerLink="/targets" class="coop-btn coop-btn-primary">
+          <i class="fas fa-bullseye"></i>
+          Manage Targets
+        </a>
       </div>
-      
+
+      <!-- Collection Management Action -->
       <div class="action-card">
-        <div class="action-icon collection-icon">💰</div>
+        <div class="action-icon" style="background-color: var(--coop-green-100);">
+          <i class="fas fa-coins" style="color: var(--coop-green-600);"></i>
+        </div>
         <h4>Collection Management</h4>
-        <a routerLink="/collections" class="action-btn">Record Collections</a>
+        <p>Track and record collections from branches</p>
+        <a routerLink="/collections" class="coop-btn coop-btn-success">
+          <i class="fas fa-coins"></i>
+          Record Collections
+        </a>
       </div>
-      
+
+      <!-- Region Management Action -->
       <div class="action-card">
-        <div class="action-icon analytics-icon">📊</div>
+        <div class="action-icon" style="background-color: var(--coop-purple-100);">
+          <i class="fas fa-globe" style="color: var(--coop-purple-600);"></i>
+        </div>
+        <h4>Region & Branches</h4>
+        <p>Manage regions and their associated branches</p>
+        <a routerLink="/admin/regions" class="coop-btn coop-btn-secondary">
+          <i class="fas fa-globe"></i>
+          Manage Regions
+        </a>
+      </div>
+
+      <!-- Analytics Action -->
+      <div class="action-card">
+        <div class="action-icon" style="background-color: var(--coop-orange-100);">
+          <i class="fas fa-chart-bar" style="color: var(--coop-orange-600);"></i>
+        </div>
         <h4>Analytics & Reports</h4>
-        <a routerLink="/analytics" class="action-btn">View Analytics</a>
+        <p>View performance analytics and reports</p>
+        <a routerLink="/analytics" class="coop-btn coop-btn-warning">
+          <i class="fas fa-chart-line"></i>
+          View Analytics
+        </a>
+      </div>
+
+      <!-- User Management Action (Admin Only) -->
+      <div class="action-card admin-action" *ngIf="isAdmin">
+        <div class="action-icon" style="background-color: var(--coop-red-100);">
+          <i class="fas fa-users" style="color: var(--coop-red-600);"></i>
+        </div>
+        <h4>User Management</h4>
+        <p>Manage user accounts and permissions</p>
+        <a routerLink="/admin/users" class="coop-btn coop-btn-danger">
+          <i class="fas fa-users"></i>
+          Manage Users
+        </a>
       </div>
     </div>
-  </div>
-  
-  <div class="admin-section" *ngIf="auth.getRole() === 'ADMIN'">
-    <h3>Admin Functions</h3>
-    <div class="admin-actions">
-      <a routerLink="/admin/users" class="admin-link">User Management</a>
-    </div>
-  </div>
-  
-  <div class="logout-section">
-    <button class="logout-btn" (click)="auth.logout()">Logout</button>
+
+
   </div>
 </div>

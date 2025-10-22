@@ -1,26 +1,136 @@
-<nav class="navbar">
-  <div class="nav-brand">
-    <h1>{{ title }}</h1>
-  </div>
-  <div class="nav-links">
-    <!-- Authenticated User Links -->
-    <ng-container *ngIf="auth.isLoggedIn()">
-      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
-      <a routerLink="/targets" routerLinkActive="active" class="nav-link">Targets</a>
-      <a routerLink="/collections" routerLinkActive="active" class="nav-link">Collections</a>
-      <a routerLink="/analytics" routerLinkActive="active" class="nav-link">Analytics</a>
-      <a *ngIf="auth.getRole() === 'ADMIN'" routerLink="/admin/regions" routerLinkActive="active" class="nav-link">Regions</a>
-      <a *ngIf="auth.getRole() === 'ADMIN'" routerLink="/admin/users" routerLinkActive="active" class="nav-link">Admin</a>
-    </ng-container>
-    
-    <!-- Guest User Links -->
-    <ng-container *ngIf="!auth.isLoggedIn()">
-      <a routerLink="/login" routerLinkActive="active" class="nav-link">Login</a>
-      <a routerLink="/register" routerLinkActive="active" class="nav-link">Register</a>
-    </ng-container>
-  </div>
-</nav>
+<div class="min-h-screen" style="background-color: var(--coop-gray-50);">
+  <!-- Top Navigation Header -->
+  <header style="background-color: var(--coop-blue-800); border-bottom: 1px solid var(--coop-gray-200); position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);">
+    <div style="padding: 0 1rem;">
+      <div class="flex justify-between items-center" style="height: 4rem;">
+        
+        <!-- Left: Logo + Mobile Menu -->
+        <div class="flex items-center">
+          <button 
+            class="lg:hidden p-2 rounded-md text-white hover:bg-blue-700"
+            style="background: none; border: none; cursor: pointer; display: none;"
+            (click)="toggleMobileSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          
+          <a routerLink="/dashboard" class="flex items-center logo-link" style="text-decoration: none; cursor: pointer; padding: 0.5rem; border-radius: 6px; transition: all 0.2s ease;">
+            <img src="assets/logo.png" alt="Co-op Life" style="height: 2rem; width: 2rem; margin-right: 0.75rem; object-fit: contain;">
+            <span style="color: white; font-weight: 600; font-size: 1.125rem;">{{ title }}</span>
+          </a>
+        </div>
 
-<main class="main-content">
-  <router-outlet></router-outlet>
-</main>
+        <!-- Center: Global Search (Hidden on mobile) -->
+        <div class="hidden md:block" style="flex: 1; max-width: 32rem; margin: 0 2rem; display: none;">
+          <div style="position: relative;">
+            <input 
+              type="text" 
+              placeholder="Search targets, collections, branches..."
+              style="width: 100%; padding-left: 2.5rem; padding-right: 1rem; padding-top: 0.5rem; padding-bottom: 0.5rem; background-color: var(--coop-blue-700); border: 1px solid var(--coop-blue-600); border-radius: 6px; color: white;">
+            <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 0.75rem; color: var(--coop-blue-300);"></i>
+          </div>
+        </div>
+
+        <!-- Right: Navigation Links + User Controls -->
+        <div class="flex items-center space-x-4">
+          <!-- Navigation Links -->
+          <nav class="hidden md:flex space-x-1" *ngIf="auth.isLoggedIn()">
+            <a routerLink="/dashboard" 
+               routerLinkActive="active" 
+               class="nav-link-header"
+               style="padding: 0.5rem 0.75rem; color: white; text-decoration: none; border-radius: 6px; transition: background-color 0.2s; font-size: 0.875rem;">
+              <i class="fas fa-tachometer-alt" style="margin-right: 0.5rem;"></i>
+              Dashboard
+            </a>
+            <a routerLink="/targets" 
+               routerLinkActive="active" 
+               class="nav-link-header"
+               style="padding: 0.5rem 0.75rem; color: white; text-decoration: none; border-radius: 6px; transition: background-color 0.2s; font-size: 0.875rem;">
+              <i class="fas fa-bullseye" style="margin-right: 0.5rem;"></i>
+              Targets
+            </a>
+            <a routerLink="/collections" 
+               routerLinkActive="active" 
+               class="nav-link-header"
+               style="padding: 0.5rem 0.75rem; color: white; text-decoration: none; border-radius: 6px; transition: background-color 0.2s; font-size: 0.875rem;">
+              <i class="fas fa-coins" style="margin-right: 0.5rem;"></i>
+              Collections
+            </a>
+            <a routerLink="/analytics" 
+               routerLinkActive="active" 
+               class="nav-link-header"
+               style="padding: 0.5rem 0.75rem; color: white; text-decoration: none; border-radius: 6px; transition: background-color 0.2s; font-size: 0.875rem;">
+              <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
+              Analytics
+            </a>
+            
+            <!-- Admin Links -->
+            <div class="relative" *ngIf="auth.getRole() === 'ADMIN'">
+              <button 
+                class="nav-link-header admin-dropdown-btn"
+                style="padding: 0.5rem 0.75rem; color: white; background: none; border: none; border-radius: 6px; transition: background-color 0.2s; font-size: 0.875rem; cursor: pointer;"
+                (click)="toggleAdminDropdown()">
+                <i class="fas fa-cogs" style="margin-right: 0.5rem;"></i>
+                Admin
+                <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.75rem;"></i>
+              </button>
+              
+              <div 
+                class="admin-dropdown"
+                style="position: absolute; top: 100%; right: 0; background: white; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 0.5rem; min-width: 12rem; z-index: 10; display: none;"
+                [style.display]="adminDropdownOpen ? 'block' : 'none'">
+                <a routerLink="/admin/regions" 
+                   class="dropdown-link"
+                   style="display: block; padding: 0.75rem 1rem; color: var(--coop-gray-700); text-decoration: none; border-bottom: 1px solid var(--coop-gray-200);">
+                  <i class="fas fa-globe" style="margin-right: 0.75rem; color: var(--coop-blue-600);"></i>
+                  Region Management
+                </a>
+                <a routerLink="/admin/branches" 
+                   class="dropdown-link"
+                   style="display: block; padding: 0.75rem 1rem; color: var(--coop-gray-700); text-decoration: none; border-bottom: 1px solid var(--coop-gray-200);">
+                  <i class="fas fa-building" style="margin-right: 0.75rem; color: var(--coop-blue-600);"></i>
+                  Branch Management
+                </a>
+                <a routerLink="/admin/users" 
+                   class="dropdown-link"
+                   style="display: block; padding: 0.75rem 1rem; color: var(--coop-gray-700); text-decoration: none;">
+                  <i class="fas fa-users" style="margin-right: 0.75rem; color: var(--coop-blue-600);"></i>
+                  User Management
+                </a>
+              </div>
+            </div>
+          </nav>
+          
+          <!-- User Info or Login/Register Links -->
+          <div class="flex items-center space-x-4">
+            <!-- User info for authenticated users -->
+            <div class="hidden sm:block text-right" *ngIf="auth.isLoggedIn()">
+              <p class="text-white font-medium">{{ auth.getUsername() }}</p>
+              <p class="text-blue-300 text-sm">{{ auth.isAdmin() ? 'Admin' : 'User' }}</p>
+            </div>
+            
+            <!-- Login/Register links for guests -->
+            <!-- <div class="flex space-x-3" *ngIf="!auth.isLoggedIn()" style="gap: 0.75rem;">
+              <a routerLink="/login" 
+                 class="auth-btn login-btn"
+                 style="display: inline-flex; align-items: center; padding: 0.625rem 1.25rem; background-color: transparent; color: white; text-decoration: none; border: 2px solid white; border-radius: 6px; font-weight: 500; font-size: 0.875rem; transition: all 0.3s ease; cursor: pointer;">
+                <i class="fas fa-sign-in-alt" style="margin-right: 0.5rem;"></i>
+                Login
+              </a>
+              <a routerLink="/register" 
+                 class="auth-btn register-btn"
+                 style="display: inline-flex; align-items: center; padding: 0.625rem 1.25rem; background-color: transparent; color: white; text-decoration: none; border: 2px solid white; border-radius: 6px; font-weight: 500; font-size: 0.875rem; transition: all 0.3s ease; cursor: pointer;">
+                <i class="fas fa-user-plus" style="margin-right: 0.5rem;"></i>
+                Register
+              </a>
+            </div> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main style="padding: 1.5rem;">
+    <router-outlet></router-outlet>
+  </main>
+</div>

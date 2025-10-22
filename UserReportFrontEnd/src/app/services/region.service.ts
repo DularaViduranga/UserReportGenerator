@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 export interface Region {
   id: number;
@@ -12,7 +13,7 @@ export interface Region {
   providedIn: 'root'
 })
 export class RegionService {
-  private API_URL = 'http://localhost:8080/api/v1/regions';
+  private API_URL = environment.apiUrl+'/api/v1/regions';
 
   constructor(private http: HttpClient) {}
 

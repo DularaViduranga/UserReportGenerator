@@ -1,0 +1,82 @@
+<div class="target-display" *ngIf="hasValidData">
+  <!-- Loading State -->
+  <div class="target-info loading" *ngIf="loading">
+    <div class="loading-content">
+      <i class="fas fa-spinner fa-spin"></i>
+      <h5>Loading Target Information...</h5>
+      <p>Please wait while we fetch the target data</p>
+    </div>
+  </div>
+
+  <!-- Target Found -->
+  <div class="target-info has-target" *ngIf="!loading && hasTarget">
+    <div class="target-header">
+      <h5>
+        <i class="fas fa-bullseye"></i> 
+        Current Target
+      </h5>
+    </div>
+    
+    <div class="target-content">
+      <div class="target-amount">
+        Rs. {{ displayTarget.target | number:'1.2-2' }}
+      </div>
+      
+      <div class="target-details">
+        <div class="detail-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>{{ monthName }} {{ selectedYear }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedBranch">
+          <i class="fas fa-building"></i>
+          <span>{{ selectedBranch }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Admin-only Update Button -->
+    <div class="target-actions" *ngIf="isAdmin">
+      <button class="update-btn" (click)="onUpdateTarget()">
+        <i class="fas fa-edit"></i> 
+        Update Target
+      </button>
+    </div>
+    
+    <!-- Non-admin message -->
+    <div class="admin-only-message" *ngIf="!isAdmin">
+      <p><i class="fas fa-info-circle"></i> Only administrators can update targets</p>
+    </div>
+  </div>
+  
+  <!-- No Target Found -->
+  <div class="target-info no-target" *ngIf="!loading && !hasTarget">
+    <div class="no-target-content">
+      <i class="fas fa-info-circle"></i>
+      <h5>No Target Set</h5>
+      <div class="no-target-details">
+        <p>No target has been set for</p>
+        <div class="period-info">
+          <strong>{{ monthName }} {{ selectedYear }}</strong>
+        </div>
+        <div class="branch-info" *ngIf="selectedBranch">
+          <strong>{{ selectedBranch }}</strong>
+        </div>
+      </div>
+      <div class="set-target-hint">
+        <i class="fas fa-arrow-up"></i>
+        Use the form above to set a target for this period
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Selection State -->
+<div class="target-display" *ngIf="!hasValidData && !loading">
+  <div class="target-info no-selection">
+    <div class="no-selection-content">
+      <i class="fas fa-search"></i>
+      <h5>Select Target Period</h5>
+      <p>Please select a branch and target period to view or set targets</p>
+    </div>
+  </div>
+</div>

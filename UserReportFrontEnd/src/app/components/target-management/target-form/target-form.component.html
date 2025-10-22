@@ -1,0 +1,127 @@
+<div class="form-container">
+  <form (ngSubmit)="onSubmit()" #targetForm="ngForm">
+    <!-- Admin Region Selection -->
+    <div class="form-group" *ngIf="isAdmin">
+      <label for="region">Select Region *</label>
+      <select 
+        id="region" 
+        [(ngModel)]="selectedRegionId" 
+        (change)="onRegionChange()" 
+        class="form-control"
+        name="region">
+        <option [value]="null">-- Select Region --</option>
+        <option *ngFor="let region of regions" [value]="region.id">
+          {{ region.rgnName }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Admin Branch Selection -->
+    <div class="form-group" *ngIf="isAdmin">
+      <label for="branch">Select Branch *</label>
+      <select 
+        id="branch" 
+        [(ngModel)]="selectedBranchId" 
+        (change)="onBranchChange()" 
+        class="form-control"
+        name="branch"
+        [disabled]="!selectedRegionId">
+        <option [value]="null">-- Select Branch --</option>
+        <option *ngFor="let branch of branches" [value]="branch.id">
+          {{ branch.brnName }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Branch User Display -->
+    <div class="form-group branch-display" *ngIf="!isAdmin && selectedBranch">
+      <label>Select Branch *</label>
+      <div class="branch-info">
+        <i class="fas fa-building"></i>
+        <span class="branch-name">{{ selectedBranch }}</span>
+      </div>
+    </div>
+
+    <!-- Month/Year Selection -->
+    <div class="form-group">
+      <label for="yearMonth">Target Period *</label>
+      <input 
+        type="month" 
+        id="yearMonth" 
+        [(ngModel)]="selectedYearMonth" 
+        (change)="onYearMonthChange()" 
+        class="form-control"
+        name="yearMonth">
+    </div>
+
+    <!-- Current Target Display (between period and amount) -->
+    <div class="current-target-display" *ngIf="currentTarget">
+      <div class="target-info-card">
+        <div class="target-header">
+          <i class="fas fa-bullseye"></i>
+          <h5>Current Target</h5>
+        </div>
+        <div class="target-content">
+          <div class="target-amount">
+            Rs. {{ currentTarget.target | number:'1.2-2' }}
+          </div>
+          <div class="target-period">
+            {{ selectedMonthName }} {{ selectedYear }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target Amount -->
+    <div class="form-group">
+      <label for="targetAmount">Target Amount (Rs.) *</label>
+      <input 
+        type="number" 
+        id="targetAmount" 
+        [(ngModel)]="targetAmount" 
+        placeholder="Enter target amount"
+        min="0"
+        step="0.01"
+        class="form-control"
+        name="targetAmount"
+        [readonly]="!isAdmin && currentTarget"
+        [class.readonly]="!isAdmin && currentTarget">
+      <div class="input-note" *ngIf="!isAdmin && currentTarget">
+        <i class="fas fa-info-circle"></i>
+        (You are not allowed to update)
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <!-- Reset button is only enabled when not in update mode (no existing target) -->
+      <button 
+        type="button" 
+        class="btn btn-secondary"
+        (click)="resetForm()"
+        [disabled]="isUpdateMode && currentTarget"
+        *ngIf="!isUpdateMode || !currentTarget">
+        Reset
+      </button>
+      
+      <!-- Set Target Button (when no existing target) -->
+      <button 
+        *ngIf="!isUpdateMode"
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!canSubmit">
+        Set Target
+      </button>
+      
+      <!-- Update Target Button (admin only, when target exists) -->
+      <button 
+        *ngIf="isUpdateMode && isAdmin"
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!canSubmit">
+        Update Target
+      </button>
+    </div>
+
+  </form>
+</div>
