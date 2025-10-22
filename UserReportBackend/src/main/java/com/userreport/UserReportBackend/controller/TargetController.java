@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RestController
 @RequestMapping("/api/v1/targets")
 public class TargetController {
@@ -44,6 +44,22 @@ public class TargetController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload targets: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/upload/update/{year}/{month}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> updateTargetsFromExcel(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable int year,
+            @PathVariable int month) {
+
+        try {
+            targetService.updateTargetsFromExcel(file, year, month);
+            return ResponseEntity.ok("Targets updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update targets: " + e.getMessage());
         }
     }
 

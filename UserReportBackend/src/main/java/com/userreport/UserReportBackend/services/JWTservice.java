@@ -2,6 +2,7 @@ package com.userreport.UserReportBackend.services;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -14,10 +15,9 @@ import java.util.Date;
 public class JWTservice {
     private final SecretKey secretKey;
 
-    public JWTservice() {
+    public JWTservice(@Value("${jwt.secret}") String secretString) {
         try{
             // Use a fixed secret key instead of generating new one each time
-            String secretString = "mySecretKeyForJWTTokenGenerationUserReportSystemVeryLongSecretKey123456789";
             secretKey = Keys.hmacShaKeyFor(secretString.getBytes());
         }catch(Exception e){
             throw new RuntimeException(e);

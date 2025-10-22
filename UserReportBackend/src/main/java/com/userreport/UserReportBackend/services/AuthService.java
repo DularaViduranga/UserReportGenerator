@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.services;
 
-import com.userreport.UserReportBackend.dto.user.LoginRequestDTO;
-import com.userreport.UserReportBackend.dto.user.LoginResponseDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterRequestDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterResponseDTO;
+import com.userreport.UserReportBackend.dto.user.*;
 import com.userreport.UserReportBackend.entity.Role;
 import com.userreport.UserReportBackend.entity.UserEntity;
 
@@ -17,4 +14,6 @@ public interface AuthService {
     boolean updateUserRole(Long userId, Role role);
     LoginResponseDTO login(LoginRequestDTO loginRequestDTO);
     RegisterResponseDTO register(RegisterRequestDTO registerRequestDTO);
+
+    RegisterResponseDTO createBranchUser(UserCreateRequestDTOByAdmin userCreateRequestDTOByAdmin);
 }

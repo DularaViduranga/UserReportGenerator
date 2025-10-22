@@ -255,6 +255,67 @@ public class ExcelUploadServiceImpl implements ExcelUploadService {
         return collections;
     }
 
+    @Override
+    public List<TargetEntity> updateTargetsFromExcel(InputStream inputStream, int year, int month) {
+        List<TargetEntity> targets = new ArrayList<>();
+
+        try {
+            XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+            XSSFSheet sheet = workbook.getSheet("targets");
+
+            int rowIndex = 0;
+            for (Row row : sheet) {
+                if (rowIndex == 0) {
+                    rowIndex++;
+                    continue; // Skip header row
+                }
+
+                Iterator<Cell> cellIterator = row.cellIterator();
+                int cellIndex = 0;
+                String branchName = null;
+                BigDecimal targetAmount = null;
+
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                    switch (cellIndex) {
+                        case 0 -> branchName = cell.getStringCellValue();
+                        case 1 -> targetAmount = BigDecimal.valueOf(cell.getNumericCellValue());
+                        default -> throw new IllegalStateException("Unexpected value: " + cellIndex);
+                    }
+                    cellIndex++;
+                }
+
+                if (branchName != null) {
+                    BranchEntity branch = branchRepo.findByBrnName(branchName);
+                    if (branch != null) {
+                        Optional<TargetEntity> existingTargetOpt = targetRepo
+                                .findByBranchIdAndYearAndMonth(branch.getId(), year, month);
+
+                        if (existingTargetOpt.isPresent()) {
+                            TargetEntity target = existingTargetOpt.get();
+                            target.setTarget(targetAmount);
+
+                            UserEntity currentUser = getCurrentUser();
+                            if (currentUser != null) {
+                                target.setModifyBy(currentUser);
+                            }
+                            target.setModifyDatetime(LocalDateTime.now());
+
+                            targets.add(target);
+                        }
+                    }
+                }
+            }
+            workbook.close();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse Excel file", e);
+        }
+        return targets;
+    }
+
+
+
     private UserEntity getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {

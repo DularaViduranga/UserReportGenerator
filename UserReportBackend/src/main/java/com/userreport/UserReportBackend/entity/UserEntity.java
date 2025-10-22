@@ -38,8 +38,8 @@ public class UserEntity {
         this.email = email;
         this.username = username;
         this.password = password;
-        this.role = email.endsWith("@admin.com") ? Role.ADMIN :
-                (email.matches(".*@\\w+\\.user\\.com$") ? Role.USER : Role.USER);    }
+        this.role = Role.USER;
+    }
 
     // Constructor for creating a user with specific role
     public UserEntity(String name, String email, String username, String password, Role role) {

@@ -69,4 +69,6 @@ public interface TargetService {
     YearlyTargetSummaryDTO getYearlyTargetSummaryByRegion(Long regionId, Integer year);
 
     void saveTargetsFromExcel(MultipartFile file, int year, int month);
+
+    void updateTargetsFromExcel(MultipartFile file, int year, int month);
 }

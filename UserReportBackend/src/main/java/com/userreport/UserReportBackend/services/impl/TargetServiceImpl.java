@@ -1,6 +1,7 @@
 package com.userreport.UserReportBackend.services.impl;
 
 import com.userreport.UserReportBackend.dto.target.*;
+import com.userreport.UserReportBackend.entity.CollectionEntity;
 import com.userreport.UserReportBackend.entity.TargetEntity;
 import com.userreport.UserReportBackend.entity.BranchEntity;
 import com.userreport.UserReportBackend.entity.UserEntity;
@@ -263,6 +264,30 @@ public class TargetServiceImpl implements TargetService {
         }
     }
 
+    @Override
+    public void updateTargetsFromExcel(MultipartFile file, int year, int month) {
+        if (!excelUploadService.isValidExcelFile(file)) {
+            throw new IllegalArgumentException("Invalid Excel file format");
+        }
+
+        try {
+            // Check if targets exist for this year and month
+            List<TargetEntity> existingTargets = targetRepo.findByTargetYearAndTargetMonth(year, month);
+
+            if (existingTargets.isEmpty()) {
+                throw new IllegalArgumentException("No targets found for " + getMonthName(month) + " " + year + ". Please use save instead of update.");
+            }
+
+            // Get updated targets from Excel
+            List<TargetEntity> updatedTargets = excelUploadService.updateTargetsFromExcel(
+                    file.getInputStream(), year, month);
+
+            // Save the updated targets
+            targetRepo.saveAll(updatedTargets);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process Excel file", e);
+        }
+    }
 
 
     @Override

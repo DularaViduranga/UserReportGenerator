@@ -13,4 +13,6 @@ public interface ExcelUploadService {
     List<CollectionEntity> getCollectionsFromExcel(InputStream inputStream, int year, int month);
 
     List<CollectionEntity> updateCollectionsFromExcel(InputStream inputStream, int year, int month);
+
+    List<TargetEntity> updateTargetsFromExcel(InputStream inputStream, int year, int month);
 }

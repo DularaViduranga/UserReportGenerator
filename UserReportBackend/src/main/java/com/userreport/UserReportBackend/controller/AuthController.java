@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.controller;
 
-import com.userreport.UserReportBackend.dto.user.LoginRequestDTO;
-import com.userreport.UserReportBackend.dto.user.LoginResponseDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterRequestDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterResponseDTO;
+import com.userreport.UserReportBackend.dto.user.*;
 import com.userreport.UserReportBackend.entity.Role;
 import com.userreport.UserReportBackend.entity.UserEntity;
 import com.userreport.UserReportBackend.services.AuthService;
@@ -15,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -66,6 +62,14 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RegisterResponseDTO> createAdminUser(@RequestBody RegisterRequestDTO registerRequestDTO){
         RegisterResponseDTO res = authService.createAdminUser(registerRequestDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
+
+    @PostMapping("/admin/create-branch-user")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RegisterResponseDTO> createBranchUser(@RequestBody UserCreateRequestDTOByAdmin userCreateRequestDTOByAdmin){
+        RegisterResponseDTO res = authService.createBranchUser(userCreateRequestDTOByAdmin);
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 

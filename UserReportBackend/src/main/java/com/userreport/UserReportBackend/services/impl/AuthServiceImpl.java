@@ -1,9 +1,6 @@
 package com.userreport.UserReportBackend.services.impl;
 
-import com.userreport.UserReportBackend.dto.user.LoginRequestDTO;
-import com.userreport.UserReportBackend.dto.user.LoginResponseDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterRequestDTO;
-import com.userreport.UserReportBackend.dto.user.RegisterResponseDTO;
+import com.userreport.UserReportBackend.dto.user.*;
 import com.userreport.UserReportBackend.entity.BranchEntity;
 import com.userreport.UserReportBackend.entity.Role;
 import com.userreport.UserReportBackend.entity.UserEntity;
@@ -49,47 +46,29 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserEntity createUser(RegisterRequestDTO userData) {
-        String email = userData.getEmail().toLowerCase();
         Role role;
         Long branchId = null;
-        
-        // Determine role and branch based on email
-        if (email.endsWith("@admin.com")) {
-            role = Role.ADMIN;
-            // Admin users don't have a specific branch
-        } else if (email.contains(".user.com")) {
-            role = Role.USER;
-            // Extract branch name from email
-            String branchName = extractBranchFromEmail(email);
-            
-            // Find the branch in the database
-            BranchEntity branch = branchRepo.findByBrnNameIgnoreCase(branchName)
+
+        String branchName = userData.getUsername().toUpperCase();
+
+        // Find the branch in the database
+        BranchEntity branch = branchRepo.findByBrnNameIgnoreCase(branchName)
                 .orElseThrow(() -> new RuntimeException("Branch '" + branchName + "' not found. Please contact administrator."));
-            
-            branchId = branch.getId();
-        } else {
-            throw new RuntimeException("Invalid email format. Admin emails must end with '@admin.com' and user emails must end with '@{branch}.user.com'");
-        }
+
+        branchId = branch.getId();
 
         UserEntity newUser = new UserEntity(
                 userData.getName(),
                 userData.getEmail(),
                 userData.getUsername(),
-                passwordEncoder.encode(userData.getPassword()),
-                role,
+                userData.getPassword(),
+//                passwordEncoder.encode(userData.getPassword()),
+                Role.USER,
                 branchId
         );
         return userRepo.save(newUser);
     }
-    
-    private String extractBranchFromEmail(String email) {
-        // Extract branch name from email format: username@branchname.user.com
-        String domain = email.substring(email.indexOf("@") + 1);
-        if (domain.endsWith(".user.com")) {
-            return domain.substring(0, domain.indexOf(".user.com"));
-        }
-        throw new RuntimeException("Invalid email format for branch user");
-    }
+
 
     @Override
     public RegisterResponseDTO createAdminUser(RegisterRequestDTO registerRequestDTO) {
@@ -99,7 +78,8 @@ public class AuthServiceImpl implements AuthService {
                 registerRequestDTO.getName(),
                 registerRequestDTO.getEmail(),
                 registerRequestDTO.getUsername(),
-                passwordEncoder.encode(registerRequestDTO.getPassword()),
+                registerRequestDTO.getPassword(),
+//                passwordEncoder.encode(registerRequestDTO.getPassword()),
                 Role.ADMIN
         );
         var user = userRepo.save(newUser);
@@ -109,6 +89,34 @@ public class AuthServiceImpl implements AuthService {
         }
         return new RegisterResponseDTO("Admin user successfully created at " + LocalDateTime.now(), null);
     }
+
+    @Override
+    public RegisterResponseDTO createBranchUser(UserCreateRequestDTOByAdmin userCreateRequestDTOByAdmin) {
+        if (isUsernameTaken(userCreateRequestDTOByAdmin.getUsername())) {
+            return new RegisterResponseDTO(null, "Username already exists");
+        }
+
+        if (isEmailTaken(userCreateRequestDTOByAdmin.getEmail())) {
+            return new RegisterResponseDTO(null, "Email already exists");
+        }
+
+        UserEntity newUser = new UserEntity(
+                userCreateRequestDTOByAdmin.getName(),
+                userCreateRequestDTOByAdmin.getEmail(),
+                userCreateRequestDTOByAdmin.getUsername(),
+                userCreateRequestDTOByAdmin.getPassword(),
+//                passwordEncoder.encode(userCreateRequestDTOByAdmin.getPassword()),
+                Role.USER,
+                userCreateRequestDTOByAdmin.getBranchId()
+        );
+        var user = userRepo.save(newUser);
+
+        if (user.getId() == null) {
+            throw new RuntimeException("Branch user creation failed");
+        }
+        return new RegisterResponseDTO("Branch user successfully created at " + LocalDateTime.now(), null);
+    }
+
 
     @Override
     public boolean deleteUser(Long userId) {
@@ -133,15 +141,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequestDTO.getUsername(),
-                        loginRequestDTO.getPassword()
-                )
-        );
-
         UserEntity user = userRepo.findByUsername(loginRequestDTO.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!user.getPassword().equals(loginRequestDTO.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
@@ -186,6 +191,9 @@ public class AuthServiceImpl implements AuthService {
             return new RegisterResponseDTO(null, "Registration failed: " + e.getMessage());
         }
     }
+
+
+
 
     private Boolean isUsernameTaken(String username) {
         return userRepo.findByUsername(username).isPresent();
