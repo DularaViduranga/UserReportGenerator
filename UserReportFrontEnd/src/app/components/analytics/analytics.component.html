@@ -7,7 +7,7 @@
   <!-- Filters Section -->
   <div class="filters-section">
     <div class="filters-row">
-      <div class="filter-group">
+      <div class="filter-group" *ngIf="!isBranchUser">
         <label for="viewMode">View Mode:</label>
         <select 
           id="viewMode" 
@@ -45,7 +45,7 @@
         </select>
       </div>
 
-      <div class="filter-group" *ngIf="viewMode === 'regional'">
+      <div class="filter-group" *ngIf="viewMode === 'regional' && !isBranchUser">
         <label for="region">Region:</label>
         <select 
           id="region" 
@@ -59,7 +59,7 @@
         </select>
       </div>
 
-      <div class="filter-group" *ngIf="viewMode === 'branch'">
+      <div class="filter-group" *ngIf="viewMode === 'branch' && !isBranchUser">
         <label for="region">Region:</label>
         <select 
           id="region" 
@@ -73,7 +73,7 @@
         </select>
       </div>
 
-      <div class="filter-group" *ngIf="viewMode === 'branch' && selectedRegionId">
+      <div class="filter-group" *ngIf="viewMode === 'branch' && selectedRegionId && !isBranchUser">
         <label for="branch">Branch:</label>
         <select 
           id="branch" 
@@ -86,6 +86,15 @@
           </option>
         </select>
       </div>
+    </div>
+  </div>
+
+  <!-- Branch User Info Section -->
+  <div class="branch-user-info" *ngIf="isBranchUser">
+    <div class="info-card">
+      <h3>Your Branch Analytics</h3>
+      <p><strong>Region:</strong> {{ getRegionName() }}</p>
+      <p><strong>Branch:</strong> {{ getBranchName() }}</p>
     </div>
   </div>
 

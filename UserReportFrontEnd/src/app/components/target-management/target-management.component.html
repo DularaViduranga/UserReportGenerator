@@ -12,6 +12,7 @@
         modalSubtitle="Import Targets"
         confirmButtonText="Upload Targets"
         fileDescription="Excel file containing target data"
+        fileNameRequirement='Only sheets named "Targets" or "targets" are allowed.'
         (uploadExcel)="onUploadExcel($event)">
       </app-excel-import>
       
@@ -22,6 +23,7 @@
         modalSubtitle="Update Targets"
         confirmButtonText="Update Targets"
         fileDescription="Excel file containing updated target data"
+        fileNameRequirement='Only sheets named "Targets" or "targets" are allowed.'
         (uploadExcel)="onUpdateTargetExcel($event)">
       </app-excel-import>
     </div>

@@ -6,6 +6,7 @@ import { RegionService, Region } from '../../services/region.service';
 import { BranchService, BranchResponse } from '../../services/branch.service';
 import { TargetService } from '../../services/target.service';
 import { CollectionService } from '../../services/collection.service';
+import { AuthService } from '../../services/auth.service';
 
 interface CollectionResponseDTO {
   id: number;
@@ -79,11 +80,17 @@ export class AnalyticsComponent implements OnInit {
   totalCollection: number = 0;
   overallAchievement: number = 0;
 
+  // User role management
+  isBranchUser: boolean = false;
+  userBranchId: number | null = null;
+  userRegionId: number | null = null;
+
   constructor(
     private regionService: RegionService,
     private branchService: BranchService,
     private targetService: TargetService,
-    private collectionService: CollectionService
+    private collectionService: CollectionService,
+    private authService: AuthService
   ) {
     const currentYear = new Date().getFullYear();
     for (let i = currentYear - 5; i <= currentYear + 5; i++) {
@@ -92,13 +99,34 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.checkUserRole();
     this.loadRegions();
+  }
+
+  checkUserRole(): void {
+    this.isBranchUser = !this.authService.isAdminUser();
+    
+    if (this.isBranchUser) {
+      this.userBranchId = this.authService.getUserBranchId();
+      
+      // Set view mode to branch analysis for branch users
+      this.viewMode = 'branch';
+      this.selectedBranchId = this.userBranchId;
+      
+      // Get region ID from the branch (we'll need to find it from loaded branches)
+      // This will be set after branches are loaded
+    }
   }
 
   loadRegions(): void {
     this.regionService.getAllRegions().subscribe({
       next: (regions) => {
         this.regions = regions;
+        
+        // If branch user, find their region and load branches
+        if (this.isBranchUser && this.userBranchId) {
+          this.findUserRegionAndLoadBranches();
+        }
       },
       error: (error) => {
         console.error('Error loading regions:', error);
@@ -106,12 +134,42 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
+  findUserRegionAndLoadBranches(): void {
+    // We need to check each region to find which one contains the user's branch
+    for (const region of this.regions) {
+      this.branchService.getBranchesByRegion(region.id).subscribe({
+        next: (branches) => {
+          const userBranch = branches.find(b => b.id === this.userBranchId);
+          if (userBranch) {
+            this.userRegionId = region.id;
+            this.selectedRegionId = region.id;
+            this.selectedBranchId = this.userBranchId;
+            this.branches = branches;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading branches for region:', error);
+        }
+      });
+    }
+  }
+
   loadBranches(): void {
     if (this.selectedRegionId) {
       this.branchService.getBranchesByRegion(this.selectedRegionId).subscribe({
         next: (branches) => {
           this.branches = branches;
-          this.selectedBranchId = null;
+          
+          if (this.isBranchUser) {
+            // For branch users, keep their branch selected and set the region ID
+            const userBranch = branches.find(b => b.id === this.userBranchId);
+            if (userBranch) {
+              this.userRegionId = this.selectedRegionId;
+              this.selectedBranchId = this.userBranchId;
+            }
+          } else {
+            this.selectedBranchId = null;
+          }
         },
         error: (error) => {
           console.error('Error loading branches:', error);
@@ -388,5 +446,21 @@ export class AnalyticsComponent implements OnInit {
     if (percentage >= 80) return 'good';
     if (percentage >= 60) return 'moderate';
     return 'poor';
+  }
+
+  getRegionName(): string {
+    if (this.userRegionId) {
+      const region = this.regions.find(r => r.id === this.userRegionId);
+      return region ? region.rgnName : 'Unknown Region';
+    }
+    return 'Unknown Region';
+  }
+
+  getBranchName(): string {
+    if (this.userBranchId) {
+      const branch = this.branches.find(b => b.id === this.userBranchId);
+      return branch ? branch.brnName : 'Unknown Branch';
+    }
+    return 'Unknown Branch';
   }
 }

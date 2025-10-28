@@ -27,6 +27,11 @@
   box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
 }
 
+.excel-import-btn:disabled,
+.excel-import-btn.disabled {
+  cursor: not-allowed;
+}
+
 .excel-icon {
   width: 22px;
   height: 22px;

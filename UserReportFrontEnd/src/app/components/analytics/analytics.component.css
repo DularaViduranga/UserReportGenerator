@@ -425,3 +425,38 @@
     gap: 10px;
   }
 }
+
+/* Branch User Info Section */
+.branch-user-info {
+  margin-bottom: 30px;
+}
+
+.info-card {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.info-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.3em;
+  font-weight: 600;
+}
+
+.info-card p {
+  margin: 8px 0;
+  font-size: 1em;
+}
+
+.info-card p strong {
+  color: #e3f2fd;
+}
+
+.info-card .note {
+  margin-top: 15px;
+  font-size: 0.9em;
+  color: #bbdefb;
+  font-style: italic;
+}

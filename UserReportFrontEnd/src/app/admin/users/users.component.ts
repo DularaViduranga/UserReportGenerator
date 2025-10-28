@@ -29,18 +29,18 @@ export class AdminUsersComponent implements OnInit {
   }
 
   loadUsers() {
-    console.log('Loading users...');
-    console.log('Auth token:', this.auth.getToken());
-    console.log('User role:', this.auth.getRole());
+    // console.log('Loading users...');
+    // console.log('Auth token:', this.auth.getToken());
+    // console.log('User role:', this.auth.getRole());
     
     this.auth.getAllUsers().subscribe({
       next: (data) => {
-        console.log('Users loaded successfully:', data);
+        // console.log('Users loaded successfully:', data);
         this.users = data;
         this.error = '';
       },
       error: (err) => {
-        console.error('Error loading users:', err);
+        // console.error('Error loading users:', err);
         this.error = 'Failed to load users: ' + (err.message || err.statusText || 'Unknown error');
       }
     });
@@ -84,7 +84,7 @@ export class AdminUsersComponent implements OnInit {
   private performDeleteUser(id: number): void {
     this.auth.deleteUser(id).subscribe({
       next: (response) => {
-        console.log('Delete user response:', response);
+        // console.log('Delete user response:', response);
         // Check if the response status indicates success
         if (response.status >= 200 && response.status < 300) {
           this.loadUsers(); // Only refresh the user list, no top message
@@ -100,7 +100,7 @@ export class AdminUsersComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error deleting user:', err);
+        // console.error('Error deleting user:', err);
         Swal.fire({
           title: 'Error!',
           text: 'Failed to delete user. Please try again.',
@@ -153,7 +153,7 @@ export class AdminUsersComponent implements OnInit {
   updateRole(id: number, role: string) {
     this.auth.updateUserRole(id, role).subscribe({
       next: (response) => {
-        console.log('Role update response:', response);
+        // console.log('Role update response:', response);
         // Check if the response status indicates success
         if (response.status >= 200 && response.status < 300) {
           this.loadUsers(); // Only refresh the user list, no top message
@@ -169,9 +169,9 @@ export class AdminUsersComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error updating user role:', err);
-        console.error('Error status:', err.status);
-        console.error('Error message:', err.message);
+        // console.error('Error updating user role:', err);
+        // console.error('Error status:', err.status);
+        // console.error('Error message:', err.message);
         
         Swal.fire({
           title: 'Error!',
@@ -488,7 +488,7 @@ export class AdminUsersComponent implements OnInit {
         this.loadUsers(); // Refresh the user list
       },
       error: (err) => {
-        console.error('Error creating admin:', err);
+        // console.error('Error creating admin:', err);
         Swal.fire({
           title: 'Error!',
           text: err.error?.error || 'Failed to create admin user. Please try again.',

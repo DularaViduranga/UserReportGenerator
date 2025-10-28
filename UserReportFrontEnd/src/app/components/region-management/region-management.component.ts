@@ -94,7 +94,44 @@ export class RegionManagementComponent implements OnInit {
     };
     
     this.regionService.createRegion(backendData).subscribe({
-      next: () => {
+      next: (response) => {
+        // Debug: Log the response to see what backend returns
+        // console.log('Region creation response:', response);
+        // console.log('Response type:', typeof response);
+        
+        // Check if the response indicates an error (even with 200 status)
+        if (response && typeof response === 'string') {
+          const responseString = response.toLowerCase();
+          if (responseString.includes('already exists') || responseString.includes('duplicate') || responseString.includes('error')) {
+            Swal.fire({
+              title: 'ERROR!',
+              text: 'Region already exists!',
+              icon: 'error'
+            });
+            return;
+          }
+        } else if (response && response.message) {
+          const responseMessage = response.message.toLowerCase();
+          if (responseMessage.includes('already exists') || responseMessage.includes('duplicate') || responseMessage.includes('error')) {
+            Swal.fire({
+              title: 'ERROR!',
+              text: 'Region already exists!',
+              icon: 'error'
+            });
+            return;
+          }
+        } else if (response && response.error) {
+          const errorMessage = response.error.toLowerCase();
+          if (errorMessage.includes('already exists') || errorMessage.includes('duplicate')) {
+            Swal.fire({
+              title: 'ERROR!',
+              text: 'Region already exists!',
+              icon: 'error'
+            });
+            return;
+          }
+        }
+        
         Swal.fire({
           title: 'Success!',
           text: 'Region created successfully!',
@@ -104,11 +141,32 @@ export class RegionManagementComponent implements OnInit {
         });
         this.loadRegions();
       },
-      error: (error) => {
-        console.error('Error creating region:', error);
+      error: (error: any) => {
+        // console.error('Error creating region:', error);
+        
+        // Check for specific error messages from backend
+        let errorMessage = 'Failed to create region.';
+        let errorTitle = 'Error!';
+        
+        if (error?.error?.message) {
+          const backendMessage = error.error.message.toLowerCase();
+          if (backendMessage.includes('already exists') || backendMessage.includes('duplicate')) {
+            errorTitle = 'ERROR!';
+            errorMessage = 'Region already exists!';
+          } else {
+            errorMessage = error.error.message;
+          }
+        } else if (error?.message) {
+          const errorMsg = error.message.toLowerCase();
+          if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
+            errorTitle = 'ERROR!';
+            errorMessage = 'Region already exists!';
+          }
+        }
+        
         Swal.fire({
-          title: 'Error!',
-          text: 'Failed to create region.',
+          title: errorTitle,
+          text: errorMessage,
           icon: 'error'
         });
       }
@@ -230,5 +288,9 @@ export class RegionManagementComponent implements OnInit {
 
   viewBranches(regionId: number): void {
     this.router.navigate(['/admin/branches', regionId]);
+  }
+
+  goBackToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

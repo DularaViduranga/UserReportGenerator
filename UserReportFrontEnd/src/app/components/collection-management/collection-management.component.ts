@@ -495,8 +495,21 @@ export class CollectionManagementComponent implements OnInit {
   }
 
   async onUploadCollectionExcel(data: {year: number, month: number, file: File}): Promise<void> {
-    // First check if there are existing collections for this period
+    // First check if targets exist for this period
     try {
+      const existingTargets = await this.targetService.getTargetsByYearAndMonth(data.year, data.month).toPromise();
+      
+      if (!existingTargets || existingTargets.length === 0) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'No Targets Found',
+          text: 'Please add targets first before adding collections.',
+          confirmButtonColor: '#dc3545'
+        });
+        return;
+      }
+
+      // Check if there are existing collections for this period
       const existingCheck = await this.collectionService.checkExistingCollections(data.year, data.month).toPromise();
       
       if (existingCheck && existingCheck.hasExistingCollections) {
@@ -589,6 +602,15 @@ export class CollectionManagementComponent implements OnInit {
     } catch (error: any) {
       console.error('Error uploading Excel file:', error);
       
+      const originalErrorMessage = error.error || error.message || 'Unknown error occurred';
+      const isFileNameError = originalErrorMessage.toLowerCase().includes('sheet') && originalErrorMessage.toLowerCase().includes('null');
+      const isExistingDataError = originalErrorMessage.toLowerCase().includes('already exist');
+      
+      let errorMessage = originalErrorMessage;
+      if (isFileNameError) {
+        errorMessage = 'Failed to upload collections: The uploaded sheet name is not allowed. Only sheets named \'Collections\' or \'collections\' are accepted.';
+      }
+      
       await Swal.fire({
         icon: 'error',
         title: 'Upload Failed',
@@ -596,11 +618,8 @@ export class CollectionManagementComponent implements OnInit {
           <div style="text-align: center;">
             <p>Failed to upload Excel file</p>
             <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
-              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+              <strong>Error:</strong> ${errorMessage}
             </div>
-            <p style="color: #6c757d; font-size: 0.9rem;">
-              Please check your file format and try again.
-            </p>
           </div>
         `,
         confirmButtonColor: '#dc3545'
@@ -685,9 +704,19 @@ export class CollectionManagementComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error updating collections:', error);
+        
+        const originalErrorMessage = error.error || 'Failed to update collections.';
+        const isFileNameError = originalErrorMessage.toLowerCase().includes('sheet') && originalErrorMessage.toLowerCase().includes('null');
+        const isExistingDataError = originalErrorMessage.toLowerCase().includes('already exist');
+        
+        let finalMessage = originalErrorMessage;
+        if (isFileNameError) {
+          finalMessage = 'Failed to update collections: The uploaded sheet name is not allowed. Only sheets named \'Collections\' or \'collections\' are accepted.';
+        }
+        
         Swal.fire({
           title: 'Update Failed',
-          text: error.error || 'Failed to update collections. Please check your file format and try again.',
+          text: finalMessage,
           icon: 'error'
         });
       }

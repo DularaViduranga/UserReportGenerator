@@ -23,12 +23,12 @@ export class LoginComponent {
     this.error = '';
     this.auth.login(this.formData).subscribe({
       next: (res) => {
-        console.log('Login response:', res);
+        // console.log('Login response:', res);
         if (res.token) {
           if (typeof localStorage !== 'undefined') {
             localStorage.setItem('authToken', res.token);
-            console.log('Token stored in localStorage');
-            console.log('Token value:', res.token);
+            // console.log('Token stored in localStorage');
+            // console.log('Token value:', res.token);
           }
           this.router.navigate(['/dashboard']);
         } else {

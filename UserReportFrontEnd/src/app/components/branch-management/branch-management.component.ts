@@ -123,7 +123,47 @@ export class BranchManagementComponent implements OnInit {
 
     if (formValues) {
       try {
-        await this.branchService.createBranch(formValues).toPromise();
+        const response = await this.branchService.createBranch(formValues).toPromise();
+        
+        // Debug: Log the response to see what backend returns
+        // console.log('Branch creation response:', response);
+        // console.log('Response type:', typeof response);
+        
+        // Check if the response indicates an error (even with 200 status)
+        if (response && typeof response === 'string') {
+          const responseString = response.toLowerCase();
+          if (responseString.includes('already exists') || responseString.includes('duplicate') || responseString.includes('error')) {
+            await Swal.fire({
+              icon: 'error',
+              title: 'ERROR!',
+              text: 'Branch already exists!',
+              confirmButtonColor: '#dc3545'
+            });
+            return;
+          }
+        } else if (response && response.message) {
+          const responseMessage = response.message.toLowerCase();
+          if (responseMessage.includes('already exists') || responseMessage.includes('duplicate') || responseMessage.includes('error')) {
+            await Swal.fire({
+              icon: 'error',
+              title: 'ERROR!',
+              text: 'Branch already exists!',
+              confirmButtonColor: '#dc3545'
+            });
+            return;
+          }
+        } else if (response && response.error) {
+          const errorMessage = response.error.toLowerCase();
+          if (errorMessage.includes('already exists') || errorMessage.includes('duplicate')) {
+            await Swal.fire({
+              icon: 'error',
+              title: 'ERROR!',
+              text: 'Branch already exists!',
+              confirmButtonColor: '#dc3545'
+            });
+            return;
+          }
+        }
         
         await Swal.fire({
           icon: 'success',
@@ -135,12 +175,33 @@ export class BranchManagementComponent implements OnInit {
         });
 
         this.loadBranches(); // Refresh the list
-      } catch (error) {
-        console.error('Error adding branch:', error);
+      } catch (error: any) {
+        // console.error('Error adding branch:', error);
+        
+        // Check for specific error messages from backend
+        let errorMessage = 'Failed to add branch. Please try again.';
+        let errorTitle = 'Error Adding Branch';
+        
+        if (error?.error?.message) {
+          const backendMessage = error.error.message.toLowerCase();
+          if (backendMessage.includes('already exists') || backendMessage.includes('duplicate')) {
+            errorTitle = 'ERROR!';
+            errorMessage = 'Branch already exists!';
+          } else {
+            errorMessage = error.error.message;
+          }
+        } else if (error?.message) {
+          const errorMsg = error.message.toLowerCase();
+          if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
+            errorTitle = 'ERROR!';
+            errorMessage = 'Branch already exists!';
+          }
+        }
+        
         await Swal.fire({
           icon: 'error',
-          title: 'Error Adding Branch',
-          text: 'Failed to add branch. Please try again.',
+          title: errorTitle,
+          text: errorMessage,
           confirmButtonColor: '#dc3545'
         });
       }
@@ -246,7 +307,7 @@ export class BranchManagementComponent implements OnInit {
 
         this.loadBranches(); // Refresh the list
       } catch (error) {
-        console.error('Error deleting branch:', error);
+        // console.error('Error deleting branch:', error);
         await Swal.fire({
           icon: 'error',
           title: 'Error Deleting Branch',

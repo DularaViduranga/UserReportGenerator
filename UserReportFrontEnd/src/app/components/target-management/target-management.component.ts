@@ -287,6 +287,15 @@ export class TargetManagementComponent implements OnInit {
     } catch (error: any) {
       console.error('Error uploading Excel file:', error);
       
+      let errorMessage = error.error || error.message || 'Unknown error occurred';
+      const isExistingDataError = errorMessage.toLowerCase().includes('already exist');
+      const isFileNameError = errorMessage.toLowerCase().includes('sheet') && errorMessage.toLowerCase().includes('null');
+      
+      // Replace generic sheet error with sheet naming error
+      if (isFileNameError) {
+        errorMessage = 'Failed to upload targets: The uploaded sheet name is not allowed. Only sheets named "Targets" or "targets" are accepted.';
+      }
+      
       await Swal.fire({
         icon: 'error',
         title: 'Upload Failed',
@@ -294,11 +303,8 @@ export class TargetManagementComponent implements OnInit {
           <div style="text-align: center;">
             <p>Failed to upload Excel file</p>
             <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
-              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+              <strong>Error:</strong> ${errorMessage}
             </div>
-            <p style="color: #6c757d; font-size: 0.9rem;">
-              Please check your file format and try again.
-            </p>
           </div>
         `,
         confirmButtonColor: '#dc3545'
@@ -422,6 +428,15 @@ export class TargetManagementComponent implements OnInit {
     } catch (error: any) {
       console.error('Error updating Excel file:', error);
       
+      let errorMessage = error.error || error.message || 'Unknown error occurred';
+      const isExistingDataError = errorMessage.toLowerCase().includes('already exist');
+      const isFileNameError = errorMessage.toLowerCase().includes('sheet') && errorMessage.toLowerCase().includes('null');
+      
+      // Replace generic sheet error with sheet naming error
+      if (isFileNameError) {
+        errorMessage = 'Failed to update targets: The uploaded sheet name is not allowed. Only sheets named "Targets" or "targets" are accepted.';
+      }
+      
       await Swal.fire({
         icon: 'error',
         title: 'Update Failed',
@@ -429,11 +444,8 @@ export class TargetManagementComponent implements OnInit {
           <div style="text-align: center;">
             <p>Failed to update targets from Excel file</p>
             <div style="background: #fff2f2; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
-              <strong>Error:</strong> ${error.error || error.message || 'Unknown error occurred'}
+              <strong>Error:</strong> ${errorMessage}
             </div>
-            <p style="color: #6c757d; font-size: 0.9rem;">
-              Please check your file format and try again.
-            </p>
           </div>
         `,
         confirmButtonColor: '#dc3545'

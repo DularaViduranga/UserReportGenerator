@@ -5,8 +5,42 @@
 }
 
 .header {
+  position: relative;
   text-align: center;
   margin-bottom: 3rem;
+}
+
+.header-actions {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.back-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.back-btn:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-btn:active {
+  transform: translateY(0);
 }
 
 .header h2 {
@@ -266,7 +300,30 @@
     gap: 1rem;
   }
   
+  .header {
+    text-align: left;
+    padding-top: 4rem;
+  }
+  
+  .header-actions {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: none;
+  }
+  
+  .back-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    width: auto;
+  }
+  
   .header h2 {
     font-size: 2rem;
+    text-align: center;
+  }
+  
+  .header p {
+    text-align: center;
   }
 }

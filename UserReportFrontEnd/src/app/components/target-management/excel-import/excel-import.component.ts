@@ -16,6 +16,8 @@ export class ExcelImportComponent {
   @Input() modalSubtitle: string = 'Import Targets';
   @Input() confirmButtonText: string = 'Upload Data';
   @Input() fileDescription: string = 'Excel file containing data';
+  @Input() fileNameRequirement: string = '';
+  @Input() disabled: boolean = false;
 
   @Output() uploadExcel = new EventEmitter<{year: number, month: number, file: File}>();
 
@@ -35,6 +37,10 @@ export class ExcelImportComponent {
   ];
 
   async importExcel(): Promise<void> {
+    if (this.disabled) {
+      return;
+    }
+    
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
@@ -71,6 +77,10 @@ export class ExcelImportComponent {
               <p style="margin: 10px 0; color: #28a745; font-weight: 500;">
                 <i class="fas fa-cloud-upload-alt"></i> Drag and drop Excel file here or click to browse
               </p>
+              <p style="margin: 5px 0; color: #17a2b8; font-size: 0.9rem; font-weight: 500;">
+                Make sure that excel sheet exists all branches.
+              </p>
+              ${this.fileNameRequirement ? `<p style="margin: 5px 0; color: #dc3545; font-size: 0.9rem; font-weight: 500;">${this.fileNameRequirement}</p>` : ''}
               <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
                 Supported formats: .xlsx, .xls
               </p>
