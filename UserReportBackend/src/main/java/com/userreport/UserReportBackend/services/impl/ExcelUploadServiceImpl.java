@@ -53,6 +53,9 @@ public class ExcelUploadServiceImpl implements ExcelUploadService {
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
             XSSFSheet sheet = workbook.getSheet("targets");
+            if (sheet == null) {
+                sheet = workbook.getSheet("Targets");
+            }
 
             int rowIndex = 0;
             for (Row row : sheet) {
@@ -101,6 +104,9 @@ public class ExcelUploadServiceImpl implements ExcelUploadService {
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
             XSSFSheet sheet = workbook.getSheet("collections");
+            if (sheet == null) {
+                sheet = workbook.getSheet("Collections");
+            }
 
             int rowIndex = 0;
             for (Row row : sheet) {
@@ -187,6 +193,9 @@ public class ExcelUploadServiceImpl implements ExcelUploadService {
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
             XSSFSheet sheet = workbook.getSheet("collections");
+            if (sheet == null) {
+                sheet = workbook.getSheet("Collections");
+            }
 
             int rowIndex = 0;
             for (Row row : sheet) {
@@ -262,6 +271,9 @@ public class ExcelUploadServiceImpl implements ExcelUploadService {
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
             XSSFSheet sheet = workbook.getSheet("targets");
+            if (sheet == null) {
+                sheet = workbook.getSheet("Targets");
+            }
 
             int rowIndex = 0;
             for (Row row : sheet) {
